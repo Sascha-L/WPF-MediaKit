@@ -28,7 +28,7 @@ namespace WPFMediaKit.DirectShow.Controls
 
         public static readonly DependencyProperty VideoRendererProperty =
             DependencyProperty.Register("VideoRenderer", typeof(VideoRendererType), typeof(MediaUriElement),
-                new FrameworkPropertyMetadata(VideoRendererType.VideoMixingRenderer9,
+                new FrameworkPropertyMetadata(VideoRendererType.EnhancedVideoRenderer,
                     new PropertyChangedCallback(OnVideoRendererChanged)));
 
         public VideoRendererType VideoRenderer

@@ -64,8 +64,9 @@ namespace WPFMediaKit.MediaFoundation
     [ComVisible(true)]
     public class EvrPresenter : ICustomAllocator, IEVRPresenterCallback
     {
-        private IntPtr m_lastSurface;
         private const int PRESENTER_BUFFER_COUNT = 5;
+        private IntPtr m_lastSurface;
+        private IMFVideoPresenter m_VideoPresenter;
 
         private EvrPresenter()
         {
@@ -120,7 +121,11 @@ namespace WPFMediaKit.MediaFoundation
         /// <summary>
         /// The custom EVR video presenter COM object
         /// </summary>
-        public IMFVideoPresenter VideoPresenter { get; private set; }
+        public IMFVideoPresenter VideoPresenter
+        {
+            get { return m_VideoPresenter; }
+            private set { m_VideoPresenter = value; }
+        }
 
         #region ICustomAllocator Members
         /// <summary>
@@ -138,17 +143,18 @@ namespace WPFMediaKit.MediaFoundation
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected void Dispose(bool disp)
         {
-            if (VideoPresenter != null)
-            {
-                Marshal.FinalReleaseComObject(VideoPresenter);
-                VideoPresenter = null;
-            }
+            var settings = m_VideoPresenter as IEVRPresenterSettings;
+
+            if (settings != null)
+                settings.RegisterCallback(null);
+
+            COMUtil.TryFinalRelease(ref m_VideoPresenter);
         }
 
         #endregion

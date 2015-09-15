@@ -133,6 +133,7 @@ private:
 	ComPtrList<T>		m_list;
 };
 
+//#define FILE_LOGGING
 
 #if defined FILE_LOGGING
 
@@ -175,6 +176,7 @@ static void LogGUID(const char *msg, REFGUID guid )
 #define LOG_HR(msg, hr) Log(msg,hr);
 
 #else
+
 
 #define LOG_MSG(msg)  
 #define LOG_GUID(msg, guid) 

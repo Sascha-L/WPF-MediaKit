@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 using DirectShowLib;
 
@@ -122,5 +123,83 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             }
             return allDisconnected;
         }
+
+        public static void RemoveFilters(IGraphBuilder graphBuilder)
+        {
+            RemoveFilters(graphBuilder, string.Empty);
+        }
+        public static void RemoveFilters(IGraphBuilder graphBuilder, string filterName)
+        {
+            if (graphBuilder == null)
+            {
+                return;
+            }
+
+            int hr = 0;
+            IEnumFilters enumFilters = null;
+            ArrayList filtersArray = new ArrayList();
+
+            try
+            {
+                hr = graphBuilder.EnumFilters(out enumFilters);
+                DsError.ThrowExceptionForHR(hr);
+
+                IBaseFilter[] filters = new IBaseFilter[1];
+                IntPtr fetched = IntPtr.Zero;
+
+                while (enumFilters.Next(filters.Length, filters, fetched) == 0)
+                {
+                    filtersArray.Add(filters[0]);
+                }
+
+                foreach (IBaseFilter filter in filtersArray)
+                {
+                    FilterInfo info;
+                    filter.QueryFilterInfo(out info);
+                    Marshal.ReleaseComObject(info.pGraph);
+
+                    try
+                    {
+                        if (!String.IsNullOrEmpty(filterName))
+                        {
+                            if (String.Equals(info.achName, filterName))
+                            {
+                                DisconnectAllPins(graphBuilder, filter);
+                                hr = graphBuilder.RemoveFilter(filter);
+                                DsError.ThrowExceptionForHR(hr);
+                                Marshal.ReleaseComObject(filter);
+                                System.Diagnostics.Trace.WriteLine("Remove filter from graph: {0}", info.achName);
+                            }
+                        }
+                        else
+                        {
+                            DisconnectAllPins(graphBuilder, filter);
+                            hr = graphBuilder.RemoveFilter(filter);
+                            DsError.ThrowExceptionForHR(hr);
+                            int i = Marshal.ReleaseComObject(filter);
+                            System.Diagnostics.Trace.WriteLine(string.Format("Remove filter from graph: {0} {1}", info.achName, i));
+                        }
+                    }
+                    catch (Exception error)
+                    {
+                        System.Diagnostics.Trace.TraceError("Remove of filter: {0}, failed with code (HR): {1}, explanation: {2}", info.achName, hr.ToString(),
+                                   error.Message);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            finally
+            {
+                if (enumFilters != null)
+                {
+                    Marshal.ReleaseComObject(enumFilters);
+                }
+            }
+        }
+
+
     }
 }

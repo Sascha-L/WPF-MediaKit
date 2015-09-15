@@ -1,7 +1,6 @@
 ﻿#region Includes
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -12,7 +11,7 @@ using DirectShowLib;
 using WPFMediaKit.MediaFoundation;
 using WPFMediaKit.MediaFoundation.Interop;
 using WPFMediaKit.Threading;
-using Size=System.Windows.Size;
+using Size = System.Windows.Size;
 #endregion
 
 namespace WPFMediaKit.DirectShow.MediaPlayers
@@ -305,7 +304,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             if (m_window.Handle == IntPtr.Zero)
             {
-                lock(m_window)
+                lock (m_window)
                 {
                     m_window.CreateHandle(new CreateParams());
                 }
@@ -495,7 +494,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             //if (m_disposed)
             //    return;
 
-            if(!disposing) 
+            if (!disposing)
                 return;
 
             if (m_window != null)
@@ -509,8 +508,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_timer.Dispose();
 
             m_timer = null;
-               
-            if(CheckAccess())
+
+            if (CheckAccess())
             {
                 FreeResources();
                 Dispatcher.BeginInvokeShutdown();
@@ -637,7 +636,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// </summary>
         private void AddWndProcHook()
         {
-          // HwndHelper.AddHook(WndProcHook);
+            // HwndHelper.AddHook(WndProcHook);
         }
 
         /// <summary>
@@ -771,14 +770,16 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             if (m_customAllocator == null)
                 return;
 
-            m_customAllocator.Dispose();
-
             m_customAllocator.NewAllocatorFrame -= CustomAllocatorNewAllocatorFrame;
             m_customAllocator.NewAllocatorSurface -= CustomAllocatorNewAllocatorSurface;
 
-            if(Marshal.IsComObject(m_customAllocator))
+            m_customAllocator.Dispose();
+
+
+
+            if (Marshal.IsComObject(m_customAllocator))
                 Marshal.ReleaseComObject(m_customAllocator);
-            
+
             m_customAllocator = null;
         }
 
@@ -798,7 +799,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 Marshal.ReleaseComObject(m_mediaControl);
             m_mediaControl = null;
 
-            if(m_mediaEvent != null)
+            if (m_mediaEvent != null)
                 Marshal.ReleaseComObject(m_mediaEvent);
             m_mediaEvent = null;
         }
@@ -859,7 +860,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             EvrPresenter presenter;
             IBaseFilter filter;
 
-            lock(m_videoRendererInitLock)
+            lock (m_videoRendererInitLock)
             {
                 var evr = new EnhancedVideoRenderer();
                 filter = evr as IBaseFilter;
@@ -883,7 +884,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var presenterSettings = presenter.VideoPresenter as IEVRPresenterSettings;
                 if (presenterSettings == null)
                     throw new Exception("Could not QueryInterface for the IEVRPresenterSettings");
-                
+
                 presenterSettings.SetBufferCount(3);
 
                 /* Use our interop hWnd */
@@ -900,12 +901,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 DsError.ThrowExceptionForHR(hr);
 
                 var filterConfig = filter as IEVRFilterConfig;
-                
+
                 if (filterConfig != null)
                     filterConfig.SetNumberOfStreams(streamCount);
             }
-            
-            
+
+
             RegisterCustomAllocator(presenter);
 
             return filter;
@@ -939,7 +940,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             if (vmrSurfAllocNotify == null)
                 throw new Exception("Could not query the VMR surface allocator.");
-            
+
             var allocator = new Vmr9Allocator();
 
             /* We supply our custom allocator to the renderer */
@@ -951,7 +952,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             RegisterCustomAllocator(allocator);
 
-            hr = graph.AddFilter(vmr9, 
+            hr = graph.AddFilter(vmr9,
                                  string.Format("Renderer: {0}", VideoRendererType.VideoMixingRenderer9));
 
             DsError.ThrowExceptionForHR(hr);
@@ -1104,7 +1105,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         #endregion
-        
+
         #region Helper Methods
         /// <summary>
         /// Sets the natural pixel resolution the video in the graph
@@ -1136,14 +1137,14 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             if (pin == null)
                 goto done;
-            
+
             int hr = pin.ConnectionMediaType(mediaType);
-            
+
             if (hr != 0)
                 goto done;
 
             /* Check to see if its a video media type */
-            if (mediaType.formatType != FormatType.VideoInfo2 && 
+            if (mediaType.formatType != FormatType.VideoInfo2 &&
                 mediaType.formatType != FormatType.VideoInfo)
             {
                 goto done;
@@ -1159,8 +1160,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
         done:
             DsUtils.FreeAMMediaType(mediaType);
-            
-            if(pin != null)
+
+            if (pin != null)
                 Marshal.ReleaseComObject(pin);
             return size;
         }
@@ -1210,69 +1211,69 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             {
                 graphBuilder.RemoveFilter(filtersArray[i]);
                 while (Marshal.ReleaseComObject(filtersArray[i]) > 0)
-                {}
+                { }
             }
         }
 
-		/// <summary>
-		/// Adds a filter to a DirectShow graph based on it's name and filter category
-		/// </summary>
-		/// <param name="graphBuilder">The graph builder to add the filter to</param>
-		/// <param name="deviceCategory">The category the filter belongs to</param>
-		/// <param name="friendlyName">The friendly name of the filter</param>
-		/// <returns>Reference to the IBaseFilter that was added to the graph or returns null if unsuccessful</returns>
-		protected static IBaseFilter AddFilterByName(IGraphBuilder graphBuilder, Guid deviceCategory, string friendlyName)
-		{
-			var devices = DsDevice.GetDevicesOfCat(deviceCategory);
+        /// <summary>
+        /// Adds a filter to a DirectShow graph based on it's name and filter category
+        /// </summary>
+        /// <param name="graphBuilder">The graph builder to add the filter to</param>
+        /// <param name="deviceCategory">The category the filter belongs to</param>
+        /// <param name="friendlyName">The friendly name of the filter</param>
+        /// <returns>Reference to the IBaseFilter that was added to the graph or returns null if unsuccessful</returns>
+        protected static IBaseFilter AddFilterByName(IGraphBuilder graphBuilder, Guid deviceCategory, string friendlyName)
+        {
+            var devices = DsDevice.GetDevicesOfCat(deviceCategory);
 
-			var deviceList = (from d in devices
-							  where d.Name == friendlyName
-							  select d);
-			DsDevice device = null;
-			if (deviceList.Count() > 0)
-				device = deviceList.Take(1).Single();
+            var deviceList = (from d in devices
+                              where d.Name == friendlyName
+                              select d);
+            DsDevice device = null;
+            if (deviceList.Count() > 0)
+                device = deviceList.Take(1).Single();
 
-		    foreach (var item in deviceList)
-		    {
+            foreach (var item in deviceList)
+            {
                 if (item != device)
                     item.Dispose();
-		    }
+            }
 
-			return AddFilterByDevice(graphBuilder, device);
-		}
+            return AddFilterByDevice(graphBuilder, device);
+        }
 
-		protected static IBaseFilter AddFilterByDevicePath(IGraphBuilder graphBuilder, Guid deviceCategory, string devicePath)
-		{
-			var devices = DsDevice.GetDevicesOfCat(deviceCategory);
+        protected static IBaseFilter AddFilterByDevicePath(IGraphBuilder graphBuilder, Guid deviceCategory, string devicePath)
+        {
+            var devices = DsDevice.GetDevicesOfCat(deviceCategory);
 
-			var deviceList = (from d in devices
-							  where d.DevicePath == devicePath
-							  select d);
-			DsDevice device = null;
-			if (deviceList.Count() > 0)
-				device = deviceList.Take(1).Single();
+            var deviceList = (from d in devices
+                              where d.DevicePath == devicePath
+                              select d);
+            DsDevice device = null;
+            if (deviceList.Count() > 0)
+                device = deviceList.Take(1).Single();
 
-			return AddFilterByDevice(graphBuilder, device);
-		}
+            return AddFilterByDevice(graphBuilder, device);
+        }
 
-		private static IBaseFilter AddFilterByDevice(IGraphBuilder graphBuilder, DsDevice device)
-		{
-			if (graphBuilder == null)
-				throw new ArgumentNullException("graphBuilder");
+        private static IBaseFilter AddFilterByDevice(IGraphBuilder graphBuilder, DsDevice device)
+        {
+            if (graphBuilder == null)
+                throw new ArgumentNullException("graphBuilder");
 
-			var filterGraph = graphBuilder as IFilterGraph2;
+            var filterGraph = graphBuilder as IFilterGraph2;
 
-			if (filterGraph == null)
-				return null;
+            if (filterGraph == null)
+                return null;
 
-			IBaseFilter filter = null;
-			if (device != null)
-			{
-				int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
-				DsError.ThrowExceptionForHR(hr);
-			}
-			return filter;
-		}
+            IBaseFilter filter = null;
+            if (device != null)
+            {
+                int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
+                DsError.ThrowExceptionForHR(hr);
+            }
+            return filter;
+        }
 
         /// <summary>
         /// Finds a pin that exists in a graph.
@@ -1284,7 +1285,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         protected static IPin FindPinInGraphByMediaType(Guid majorOrMinorMediaType, PinDirection pinDirection, IGraphBuilder graph)
         {
             IEnumFilters enumFilters;
-            
+
             /* Get the filter enum */
             graph.EnumFilters(out enumFilters);
 
@@ -1308,7 +1309,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     pin.EnumMediaTypes(out mediaTypesEnum);
                     var mediaTypesFetched = IntPtr.Zero;
                     var mediaTypes = new AMMediaType[1];
-                    
+
                     /* Enumerate the media types on the pin */
                     while (mediaTypesEnum.Next(1, mediaTypes, mediaTypesFetched) == 0)
                     {

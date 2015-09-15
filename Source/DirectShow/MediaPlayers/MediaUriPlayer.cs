@@ -1,5 +1,6 @@
 ﻿#region Usings
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using DirectShowLib;
 #endregion
@@ -278,12 +279,9 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 IBaseFilter sourceFilter;
                 int hr;
 
-                //var file = System.IO.File.CreateText(@"M:\DirectShowLog.txt");
-                //filterGraph.SetLogFile((file.BaseStream as System.IO.FileStream).SafeFileHandle.DangerousGetHandle());
-
 
                 // Set LAV Splitter
-                LAVSplitterSource reader = new LAVSplitterSource();
+               /* LAVSplitterSource reader = new LAVSplitterSource();
                 sourceFilter = reader as IBaseFilter;
                 var objectWithSite = reader as IObjectWithSite;
                 if (objectWithSite != null)
@@ -291,9 +289,11 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     objectWithSite.SetSite(this);
                 }
 
-                hr = m_graph.AddFilter(sourceFilter, SplitterSource);
-                DsError.ThrowExceptionForHR(hr);
 
+                hr = m_graph.AddFilter(sourceFilter, SplitterSource);
+                DsError.ThrowExceptionForHR(hr);*/
+
+                sourceFilter = DirectShowUtil.AddFilterToGraph(m_graph, SplitterSource, Guid.Empty);
 
                 IFileSourceFilter interfaceFile = (IFileSourceFilter)sourceFilter;
                 hr = interfaceFile.Load(fileSource, null);
@@ -328,41 +328,47 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 DirectShowUtil.AddFilterToGraph(m_graph, VideoDecoder, Guid.Empty);
 
-                // Set Audio Codec
-                // Remove Pin
-                var audioPinFrom = DirectShowLib.DsFindPin.ByName(sourceFilter, "Audio");
-                IPin audioPinTo;
-                if (audioPinFrom != null)
+                try
                 {
-                    hr = audioPinFrom.ConnectedTo(out audioPinTo);
-                    if (hr >= 0 && audioPinTo != null)
+                    // Set Audio Codec
+                    // Remove Pin
+                    var audioPinFrom = DirectShowLib.DsFindPin.ByName(sourceFilter, "Audio");
+                    IPin audioPinTo;
+                    if (audioPinFrom != null)
                     {
-                        PinInfo pInfo;
-                        audioPinTo.QueryPinInfo(out pInfo);
-                        FilterInfo fInfo;
-                        pInfo.filter.QueryFilterInfo(out fInfo);
+                        hr = audioPinFrom.ConnectedTo(out audioPinTo);
+                        if (hr >= 0 && audioPinTo != null)
+                        {
+                            PinInfo pInfo;
+                            audioPinTo.QueryPinInfo(out pInfo);
+                            FilterInfo fInfo;
+                            pInfo.filter.QueryFilterInfo(out fInfo);
 
-                        DirectShowUtil.DisconnectAllPins(m_graph, pInfo.filter);
-                        m_graph.RemoveFilter(pInfo.filter);
+                            DirectShowUtil.DisconnectAllPins(m_graph, pInfo.filter);
+                            m_graph.RemoveFilter(pInfo.filter);
 
-                        DsUtils.FreePinInfo(pInfo);
-                        Marshal.ReleaseComObject(fInfo.pGraph);
-                        Marshal.ReleaseComObject(audioPinTo);
-                        audioPinTo = null;
+                            DsUtils.FreePinInfo(pInfo);
+                            Marshal.ReleaseComObject(fInfo.pGraph);
+                            Marshal.ReleaseComObject(audioPinTo);
+                            audioPinTo = null;
+                        }
+                        Marshal.ReleaseComObject(audioPinFrom);
+                        audioPinFrom = null;
                     }
-                    Marshal.ReleaseComObject(audioPinFrom);
-                    audioPinFrom = null;
+
+                    DirectShowUtil.AddFilterToGraph(m_graph, AudioDecoder, Guid.Empty);
+
+
+                    /* Add our prefered audio renderer */
+                    InsertAudioRenderer(AudioRenderer);
+                }
+                catch
+                {
+                    // No Audio available
+                    Trace.TraceError("No Audio Device found!");
                 }
 
-                DirectShowUtil.AddFilterToGraph(m_graph, AudioDecoder, Guid.Empty);
-
-
-                /* Add our prefered audio renderer */
-                InsertAudioRenderer(AudioRenderer);
-
                 IBaseFilter renderer = CreateVideoRenderer(VideoRenderer, m_graph, 2);
-
-
 
                 /* We will want to enum all the pins on the source filter */
                 IEnumPins pinEnum;
@@ -389,14 +395,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                         //mixer.SetMixingPrefs(dwPrefs);
                     }
                 }
-
-                /* Test using FFDShow Video Decoder Filter
-                var ffdshow = new FFDShow() as IBaseFilter;
-
-                if (ffdshow != null)
-                    m_graph.AddFilter(ffdshow, "ffdshow");
-                */
-
 
                 /* Loop over each pin of the source filter */
                 while (pinEnum.Next(pins.Length, pins, fetched) == 0)
@@ -426,6 +424,128 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 SetupFilterGraph(m_graph);
 
                 HasVideo = true;
+
+            }
+            catch (Exception ex)
+            {
+                /* This exection will happen usually if the media does
+                 * not exist or could not open due to not having the
+                 * proper filters installed */
+
+
+                // Fallback try auto graph:
+                var result = oldOpenSource();
+
+                if (!result)
+                {
+                    FreeResources();
+
+                    /* Fire our failed event */
+                    InvokeMediaFailed(new MediaFailedEventArgs(ex.Message, ex));
+                }
+            }
+
+            InvokeMediaOpened();
+        }
+
+        private bool oldOpenSource()
+        {
+            /* Make sure we clean up any remaining mess */
+            FreeResources();
+
+            if (m_sourceUri == null)
+                return false;
+
+            string fileSource = m_sourceUri.OriginalString;
+
+            if (string.IsNullOrEmpty(fileSource))
+                return false;
+
+            try
+            {
+                /* Creates the GraphBuilder COM object */
+                m_graph = new FilterGraphNoThread() as IGraphBuilder;
+
+                if (m_graph == null)
+                    throw new Exception("Could not create a graph");
+
+                try
+                {
+                    /* Add our prefered audio renderer */
+                    InsertAudioRenderer(AudioRenderer);
+                }
+                catch
+                {
+                    // No Audio device found
+                    Trace.TraceError("No Audio Device found!");
+                }
+
+                IBaseFilter renderer = CreateVideoRenderer(VideoRenderer, m_graph, 2);
+
+                var filterGraph = m_graph as IFilterGraph2;
+
+                if (filterGraph == null)
+                    throw new Exception("Could not QueryInterface for the IFilterGraph2");
+
+                IBaseFilter sourceFilter;
+
+                /* Have DirectShow find the correct source filter for the Uri */
+                int hr = filterGraph.AddSourceFilter(fileSource, fileSource, out sourceFilter);
+                DsError.ThrowExceptionForHR(hr);
+
+                /* We will want to enum all the pins on the source filter */
+                IEnumPins pinEnum;
+
+                hr = sourceFilter.EnumPins(out pinEnum);
+                DsError.ThrowExceptionForHR(hr);
+
+                IntPtr fetched = IntPtr.Zero;
+                IPin[] pins = { null };
+
+                /* Counter for how many pins successfully rendered */
+                int pinsRendered = 0;
+
+                if (VideoRenderer == VideoRendererType.VideoMixingRenderer9)
+                {
+                    var mixer = renderer as IVMRMixerControl9;
+
+                    if (mixer != null)
+                    {
+                        VMR9MixerPrefs dwPrefs;
+                        mixer.GetMixingPrefs(out dwPrefs);
+                        dwPrefs &= ~VMR9MixerPrefs.RenderTargetMask;
+                        dwPrefs |= VMR9MixerPrefs.RenderTargetRGB;
+                        //mixer.SetMixingPrefs(dwPrefs);
+                    }
+                }
+              
+
+                /* Loop over each pin of the source filter */
+                while (pinEnum.Next(pins.Length, pins, fetched) == 0)
+                {
+                    if (filterGraph.RenderEx(pins[0],
+                                             AMRenderExFlags.RenderToExistingRenderers,
+                                             IntPtr.Zero) >= 0)
+                        pinsRendered++;
+
+                    Marshal.ReleaseComObject(pins[0]);
+                }
+
+                Marshal.ReleaseComObject(pinEnum);
+                Marshal.ReleaseComObject(sourceFilter);
+
+                if (pinsRendered == 0)
+                    throw new Exception("Could not render any streams from the source Uri");
+
+#if DEBUG
+                /* Adds the GB to the ROT so we can view
+                 * it in graphedit */
+                m_dsRotEntry = new DsROTEntry(m_graph);
+#endif
+                /* Configure the graph in the base class */
+                SetupFilterGraph(m_graph);
+
+                HasVideo = true;
                 /* Sets the NaturalVideoWidth/Height */
                 //SetNativePixelSizes(renderer);
             }
@@ -438,9 +558,13 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 /* Fire our failed event */
                 InvokeMediaFailed(new MediaFailedEventArgs(ex.Message, ex));
+
+                return false;
             }
 
             InvokeMediaOpened();
+
+            return true;
         }
 
         /// <summary>
@@ -481,6 +605,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             if (m_graph != null)
             {
+                DirectShowUtil.RemoveFilters(m_graph);
                 Marshal.ReleaseComObject(m_graph);
                 m_graph = null;
 
