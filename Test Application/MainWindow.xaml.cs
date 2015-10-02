@@ -37,5 +37,13 @@ namespace Test_Application
             if (result == true)
                 mediaUriElement.Source = new Uri(dlg.FileName);
         }
+        
+        private void btnFrameStep_Click(object sender, RoutedEventArgs e)
+        {
+            if  (mediaUriElement.Source != null)
+            {
+                mediaUriElement.FrameStep(1);
+            }
+        }
     }
 }
