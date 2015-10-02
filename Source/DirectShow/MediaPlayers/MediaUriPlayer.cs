@@ -101,6 +101,52 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             get;
             set;
         }
+        
+        /// <summary>
+        /// Implementation of framestepinterface to step video forward by minimum of one frame e.g. by mousewheel
+        /// </summary>
+        private IVideoFrameStep frameStep;
+        
+        /// <summary>
+        /// step the frames
+        /// </summary>
+        public void StepFrame(int framecount)
+        {
+            int i = frameStep.CanStep(0, null);
+            if (i == 0)
+            {
+                this.Play();
+                frameStep.Step(framecount, null);
+            }
+        }
+
+        //
+        // Some video renderers support stepping media frame by frame with the
+        // IVideoFrameStep interface.  See the interface documentation for more
+        // details on frame stepping.
+        //
+        private bool GetFrameStepInterface()
+        {
+            int hr = 0;
+
+            IVideoFrameStep frameStepTest = null;
+
+            // Get the frame step interface, if supported
+            frameStepTest = (IVideoFrameStep)this.m_graph;
+
+            // Check if this decoder can step
+            hr = frameStepTest.CanStep(0, null);
+            if (hr == 0)
+            {
+                this.frameStep = frameStepTest;
+                return true;
+            }
+            else
+            {
+                this.frameStep = null;
+                return false;
+            }
+        }
 
         /// <summary>
         /// The name of the audio renderer device
@@ -424,7 +470,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 SetupFilterGraph(m_graph);
 
                 HasVideo = true;
-
+                
+                GetFrameStepInterface();
             }
             catch (Exception ex)
             {
