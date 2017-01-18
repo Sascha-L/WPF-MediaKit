@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -62,6 +63,12 @@ namespace WPFMediaKit.DirectShow.Controls
         /// TryLock timeout for the invalidate video image. Low values means higher UI responsivity, but more video dropped frames.
         /// </summary>
         private Duration m_invalidateVideoImageLockDuration = new Duration(TimeSpan.FromMilliseconds(100));
+
+        /// <summary>
+        /// Flag to reduce redundant calls to the AddDirtyRect when the rendering thread is busy.
+        /// Int instead of bool for Interlocked support.
+        /// </summary>
+        private int m_videoImageInvalid = 1;
         #endregion
 
         #region Dependency Properties
@@ -413,6 +420,12 @@ namespace WPFMediaKit.DirectShow.Controls
             SetNaturalVideoWidth(m_d3dImage.PixelWidth);
         }
 
+        private bool GetSetVideoImageInvalid(bool value)
+        {
+            int oldValue = Interlocked.Exchange(ref m_videoImageInvalid, value ? 1 : 0);
+            return oldValue == 1;
+        }
+
         /// <summary>
         /// Invalidates any possible cloned renderer we may have
         /// </summary>
@@ -542,6 +555,8 @@ namespace WPFMediaKit.DirectShow.Controls
 
         protected void InvalidateVideoImage()
         {
+            GetSetVideoImageInvalid(true);
+
             if (!m_renderOnCompositionTargetRendering)
                 InternalInvalidateVideoImage();
         }
@@ -554,13 +569,19 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Ensure we run on the correct Dispatcher */
             if(!D3DImage.Dispatcher.CheckAccess())
             {
-                D3DImage.Dispatcher.BeginInvoke((Action)(() => InvalidateVideoImage()));
+                D3DImage.Dispatcher.BeginInvoke((Action)(() => InternalInvalidateVideoImage()));
                 return;
             }
 
             /* If there is a new Surface to set,
              * this method will do the trick */
             SetBackBufferInternal(m_pBackBuffer);
+
+            // may save a few AddDirtyRect calls when the rendering thread is too busy
+            // or RenderOnCompositionTargetRendering is set but the video is not playing
+            bool invalid = GetSetVideoImageInvalid(false);
+            if (!invalid)
+                return;
 
             /* Only render the video image if possible, or if IsRenderingEnabled is true */
             if (D3DImage.IsFrontBufferAvailable && IsRenderingEnabled && m_pBackBuffer != IntPtr.Zero)
