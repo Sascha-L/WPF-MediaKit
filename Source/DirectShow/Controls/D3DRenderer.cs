@@ -57,6 +57,11 @@ namespace WPFMediaKit.DirectShow.Controls
         /// This is used to remember the value for when the control is loaded and unloaded.
         /// </summary>
         private bool m_renderOnCompositionTargetRenderingTemp;
+
+        /// <summary>
+        /// TryLock timeout for the invalidate video image. Low values means higher UI responsivity, but more video dropped frames.
+        /// </summary>
+        private Duration m_invalidateVideoImageLockDuration = new Duration(TimeSpan.FromMilliseconds(100));
         #endregion
 
         #region Dependency Properties
@@ -387,11 +392,15 @@ namespace WPFMediaKit.DirectShow.Controls
             {
                 D3DImage.Lock();
                 D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer);
-                D3DImage.Unlock();
-                SetNaturalWidthHeight();
             }
             catch
             { }
+            finally
+            {
+                D3DImage.Unlock();
+            }
+
+            SetNaturalWidthHeight();
 
             /* Clear our flag, so this won't be ran again
              * until a new surface is sent */
@@ -545,7 +554,7 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Ensure we run on the correct Dispatcher */
             if(!D3DImage.Dispatcher.CheckAccess())
             {
-                D3DImage.Dispatcher.Invoke((Action)(() => InvalidateVideoImage()));
+                D3DImage.Dispatcher.BeginInvoke((Action)(() => InvalidateVideoImage()));
                 return;
             }
 
@@ -558,16 +567,20 @@ namespace WPFMediaKit.DirectShow.Controls
             {
                 try
                 {
+                    if (!D3DImage.TryLock(InvalidateVideoImageLockDuration))
+                        return;
                     /* Invalidate the entire image */
-                    D3DImage.Lock();
                     D3DImage.AddDirtyRect(new Int32Rect(0, /* Left */
                                                         0, /* Top */
                                                         D3DImage.PixelWidth, /* Width */
                                                         D3DImage.PixelHeight /* Height */));
-                    D3DImage.Unlock();
                 }
                 catch (Exception)
                 { }
+                finally
+                {
+                    D3DImage.Unlock();
+                }
             }
 
             /* Invalidate all of our cloned D3DRenderers */
@@ -582,6 +595,19 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Hook into the framework events */
             Loaded += D3DRendererLoaded;
             Unloaded += D3DRendererUnloaded;
+        }
+
+        /// <summary>
+        /// TryLock timeout for the invalidate video image. Low values means higher UI responsivity, but more video dropped frames.
+        /// </summary>
+        public Duration InvalidateVideoImageLockDuration
+        {
+            get { return m_invalidateVideoImageLockDuration; }
+            set {
+                if (value == null)
+                    throw new ArgumentNullException("InvalidateVideoImageLockDuration");
+                m_invalidateVideoImageLockDuration = value;
+            }
         }
 
         /// <summary>
