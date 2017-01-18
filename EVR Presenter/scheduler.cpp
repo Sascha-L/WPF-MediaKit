@@ -123,14 +123,6 @@ HRESULT Scheduler::StartScheduler(IMFClock *pClock)
   }
 
 
-  // Create an event to wait for flush commands to complete.
-  m_hFlushDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-  if (m_hFlushDoneEvent == NULL)
-  {
-    hr = HRESULT_FROM_WIN32(GetLastError());
-    goto done;
-  }
-
   // Create the scheduler thread.
   m_hSchedulerThread = CreateThread(NULL, 0, SchedulerThreadProc, (LPVOID)this, 0, &dwID);
   if (m_hSchedulerThread == NULL)
