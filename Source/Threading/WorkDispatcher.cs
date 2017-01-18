@@ -212,7 +212,7 @@ namespace WPFMediaKit.Threading
                     if (method != null)
                         method.DynamicInvoke(null);
                 }
-                catch (Exception ex)
+                catch
                 {
                     throw;
                 }

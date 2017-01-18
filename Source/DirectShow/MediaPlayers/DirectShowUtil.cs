@@ -39,7 +39,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 }
                 return NewFilter;
             }
-            catch (Exception ex)
+            catch //(Exception ex)
             {
                 //Log.Error("Failed filter: {0} not found {0}", strFilterName, ex.Message);
                 return null;

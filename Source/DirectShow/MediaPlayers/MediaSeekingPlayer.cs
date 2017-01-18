@@ -28,7 +28,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// <summary>
         /// Sets the rate at which the media plays back
         /// </summary>
-        public double SpeedRatio
+        public virtual double SpeedRatio
         {
             get
             {
