@@ -93,6 +93,21 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         /// <summary>
+        /// Return Source as a string path or uri.
+        /// </summary>
+        private string FileSource
+        {
+            get
+            {
+                if (m_sourceUri == null)
+                    return null;
+                if (m_sourceUri.IsFile)
+                    return m_sourceUri.LocalPath;
+                return m_sourceUri.ToString();
+            }
+        }
+
+        /// <summary>
         /// The renderer type to use when
         /// rendering video
         /// </summary>
@@ -255,10 +270,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* Make sure we clean up any remaining mess */
             FreeResources();
 
-            if (m_sourceUri == null)
-                return;
-
-            string fileSource = m_sourceUri.OriginalString;
+            string fileSource = FileSource;
 
             if (string.IsNullOrEmpty(fileSource))
                 return;
@@ -453,10 +465,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* Make sure we clean up any remaining mess */
             FreeResources();
 
-            if (m_sourceUri == null)
-                return false;
-
-            string fileSource = m_sourceUri.OriginalString;
+            string fileSource = FileSource;
 
             if (string.IsNullOrEmpty(fileSource))
                 return false;
