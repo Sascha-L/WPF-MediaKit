@@ -601,5 +601,55 @@ namespace WPFMediaKit.DirectShow.Controls
             renderer.SetBackBuffer(m_pBackBuffer);
             return renderer;
         }
+
+        /// <summary>
+        /// Creates a cloned image of the current video frame.
+        /// The image can be used thread-safe.
+        /// </summary>
+        /// <returns></returns>
+        public Image CloneSingleFrameImage()
+        {
+            // create new image and it's D3D source
+            Image img = new Image();
+            D3DImage d3dSource = new D3DImage();
+
+            // add the D3D source
+            img.Source = d3dSource;
+
+            // set default stretch
+            img.Stretch = (Stretch)StretchProperty.DefaultMetadata.DefaultValue;
+            img.StretchDirection = (StretchDirection)StretchProperty.DefaultMetadata.DefaultValue;
+
+            // store pixel width and height
+            int pxWidth = 0;
+            int pxHeight = 0;
+
+            /* We have this around a try/catch just in case we
+             * lose the device and our Surface is invalid. The
+             * try/catch may not be needed, but testing needs
+             * to take place before it's removed */
+            try
+            {
+                // assign surface as back buffer
+                d3dSource.Lock();
+                d3dSource.SetBackBuffer(D3DResourceType.IDirect3DSurface9, m_pBackBuffer);
+                d3dSource.Unlock();
+
+                // update pixel width and height
+                pxWidth = d3dSource.PixelWidth;
+                pxHeight = d3dSource.PixelHeight;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+            // UIElement Layout Update
+            img.Measure(new Size(pxWidth, pxHeight));
+            img.Arrange(new Rect(new Size(pxWidth, pxHeight)));
+            img.UpdateLayout();
+
+            return img;
+        }
     }
 }
