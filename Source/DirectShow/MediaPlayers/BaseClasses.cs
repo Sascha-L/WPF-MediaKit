@@ -864,7 +864,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             {
                 var evr = new EnhancedVideoRenderer();
                 filter = evr as IBaseFilter;
-
+                
                 int hr = graph.AddFilter(filter, string.Format("Renderer: {0}", VideoRendererType.EnhancedVideoRenderer));
                 DsError.ThrowExceptionForHR(hr);
 

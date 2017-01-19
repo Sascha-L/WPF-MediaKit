@@ -293,17 +293,17 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
 
                 // Set LAV Splitter
-               /* LAVSplitterSource reader = new LAVSplitterSource();
-                sourceFilter = reader as IBaseFilter;
-                var objectWithSite = reader as IObjectWithSite;
-                if (objectWithSite != null)
-                {
-                    objectWithSite.SetSite(this);
-                }
+                /* LAVSplitterSource reader = new LAVSplitterSource();
+                 sourceFilter = reader as IBaseFilter;
+                 var objectWithSite = reader as IObjectWithSite;
+                 if (objectWithSite != null)
+                 {
+                     objectWithSite.SetSite(this);
+                 }
 
 
-                hr = m_graph.AddFilter(sourceFilter, SplitterSource);
-                DsError.ThrowExceptionForHR(hr);*/
+                 hr = m_graph.AddFilter(sourceFilter, SplitterSource);
+                 DsError.ThrowExceptionForHR(hr);*/
 
                 sourceFilter = DirectShowUtil.AddFilterToGraph(m_graph, SplitterSource, Guid.Empty);
 
@@ -381,6 +381,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 }
 
                 IBaseFilter renderer = CreateVideoRenderer(VideoRenderer, m_graph, 2);
+
 
                 /* We will want to enum all the pins on the source filter */
                 IEnumPins pinEnum;
@@ -527,7 +528,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                         //mixer.SetMixingPrefs(dwPrefs);
                     }
                 }
-              
+
 
                 /* Loop over each pin of the source filter */
                 while (pinEnum.Next(pins.Length, pins, fetched) == 0)

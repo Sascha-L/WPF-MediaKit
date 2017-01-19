@@ -128,7 +128,6 @@ namespace WPFMediaKit.MediaFoundation
         /// </summary>
         public static class ComHelper
         {
-
             private static DLLLoader loader = new DLLLoader();
 
             /// <summary>

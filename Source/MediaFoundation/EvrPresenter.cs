@@ -147,14 +147,24 @@ namespace WPFMediaKit.MediaFoundation
             GC.SuppressFinalize(this);
         }
 
-        protected void Dispose(bool disp)
+        protected void Dispose(bool dispose)
+        {
+            if (dispose)
+            {
+                var settings = m_VideoPresenter as IEVRPresenterSettings;
+
+                if (settings != null)
+                    settings.RegisterCallback(null);
+            }
+            COMUtil.TryFinalRelease(ref m_VideoPresenter);
+        }
+
+        public void Stop()
         {
             var settings = m_VideoPresenter as IEVRPresenterSettings;
 
             if (settings != null)
                 settings.RegisterCallback(null);
-
-            COMUtil.TryFinalRelease(ref m_VideoPresenter);
         }
 
         #endregion
