@@ -337,43 +337,12 @@ namespace WPFMediaKit.DirectShow.Controls
         }
 
         /// <summary>
-        /// Cleans up any dead references we may have to any cloned renderers
-        /// </summary>
-        private void CleanZombieRenderers()
-        {
-            lock (m_clonedD3Drenderers)
-            {
-                var deadObjects = new List<WeakReference>();
-
-                for (int i = 0; i < m_clonedD3Drenderers.Count; i++)
-                {
-                    if (!m_clonedD3Drenderers[i].IsAlive)
-                        deadObjects.Add(m_clonedD3Drenderers[i]);
-                }
-
-                foreach (var deadGuy in deadObjects)
-                {
-                    m_clonedD3Drenderers.Remove(deadGuy);
-                }
-            }
-        }
-
-        /// <summary>
         /// Sets the backbuffer for any cloned D3DRenderers
         /// </summary>
         private void SetBackBufferForClones()
         {
-            lock (m_clonedD3Drenderers)
-            {
-                CleanZombieRenderers();
-
-                foreach (var rendererRef in m_clonedD3Drenderers)
-                {
-                    var renderer = rendererRef.Target as D3DRenderer;
-                    if (renderer != null)
-                        renderer.SetBackBuffer(m_pBackBuffer);
-                }
-            }
+            var backBuffer = m_pBackBuffer;
+            ForEachCloneD3DRenderer(r => r.SetBackBuffer(backBuffer));
         }
 
         /// <summary>
@@ -431,16 +400,36 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         private void InvalidateClonedVideoImages()
         {
+            ForEachCloneD3DRenderer(r => r.InvalidateVideoImage());
+        }
+
+        private void ForEachCloneD3DRenderer(Action<D3DRenderer> action)
+        {
             lock (m_clonedD3Drenderers)
             {
-                CleanZombieRenderers();
-
+                bool needClean = false;
                 foreach (var rendererRef in m_clonedD3Drenderers)
                 {
                     var renderer = rendererRef.Target as D3DRenderer;
                     if (renderer != null)
-                        renderer.InvalidateVideoImage();
+                        action(renderer);
+                    else
+                        needClean = true;
                 }
+
+                if (needClean)
+                    CleanZombieRenderers();
+            }
+        }
+
+        /// <summary>
+        /// Cleans up any dead references we may have to any cloned renderers
+        /// </summary>
+        private void CleanZombieRenderers()
+        {
+            lock (m_clonedD3Drenderers)
+            {
+                m_clonedD3Drenderers.RemoveAll(c => !c.IsAlive);
             }
         }
 
