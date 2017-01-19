@@ -2,6 +2,8 @@
 
 Official new home of WPF MediaKit (https://wpfmediakit.codeplex.com/)!
 
+Officual NuGet Package: https://www.nuget.org/packages/WPFMediaKit/
+
 What's changed in version 2.0?
 - EVR Presenter uses DXVA2 hardware acceleration (thanks to Siegfried Krüger!)
 - EVR Presenter doesn't require the DirectX  March 2009 Runtimes anymore (thanks to Siegfried Krüger!)
