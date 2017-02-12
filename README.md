@@ -1,5 +1,7 @@
 # WPF MediaKit
 
+[![Build status](https://ci.appveyor.com/api/projects/status/c9d8fgjridsge83c/branch/master?svg=true)](https://ci.appveyor.com/project/xmedeko/wpf-mediakit/branch/master)
+
 This is the official new home of WPF MediaKit (the former was https://wpfmediakit.codeplex.com/).
 
 Official NuGet Package: https://www.nuget.org/packages/WPFMediaKit/
