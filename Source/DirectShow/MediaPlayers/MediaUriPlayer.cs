@@ -608,20 +608,22 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
              * Dispatcher VeryifyAccess() issues because
              * this may be called from the GC */
             StopInternal();
-
-            /* Let's clean up the base 
-             * class's stuff first */
-            base.FreeResources();
-
+            
             if (m_graph != null)
             {
                 DirectShowUtil.RemoveFilters(m_graph);
                 Marshal.ReleaseComObject(m_graph);
                 m_graph = null;
 
+                base.FreeResources();
+
                 /* Only run the media closed if we have an
                  * initialized filter graph */
                 InvokeMediaClosed(new EventArgs());
+            }
+            else
+            {
+                base.FreeResources();
             }
         }
     }
