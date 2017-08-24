@@ -262,7 +262,7 @@ namespace WPFMediaKit.DirectShow.Controls
             base.InitializeMediaPlayer();
 
             if (MediaSeekingPlayer == null)
-                throw new Exception("MediaSeekingPlayer is null or does not inherit MediaSeekingPlayer");
+                throw new WPFMediaKitException("MediaSeekingPlayer is null or does not inherit MediaSeekingPlayer");
 
             /* Let us know when the media position has changed */
             MediaSeekingPlayer.MediaPositionChanged += OnMediaPlayerPositionChangedPrivate;

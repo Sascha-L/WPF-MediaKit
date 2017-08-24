@@ -289,7 +289,7 @@ namespace WPFMediaKit.DirectShow.Controls
 
             if (MediaPlayerBase == null)
             {
-                throw new Exception("OnRequestMediaPlayer cannot return null");
+                throw new WPFMediaKitException("OnRequestMediaPlayer cannot return null");
             }
 
             /* Hook into the normal .NET events */
@@ -519,7 +519,7 @@ namespace WPFMediaKit.DirectShow.Controls
                     Pause();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("state");
             }
         }
 

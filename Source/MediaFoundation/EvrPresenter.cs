@@ -233,10 +233,10 @@ namespace WPFMediaKit.MediaFoundation
                 evrPresenter.VideoPresenter = presenter;
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 COMUtil.TryFinalRelease(ref presenter);
-                throw new Exception("Could not create IMFVideoPresenter", e);
+                throw new WPFMediaKitException("Could not create IMFVideoPresenter", ex);
             }
 
             return evrPresenter;

@@ -106,6 +106,7 @@
     </Compile>
     <Compile Include="Threading\WorkDispatcher.cs" />
     <Compile Include="Threading\WorkDispatcherObject.cs" />
+    <Compile Include="WPFMediaKitException.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

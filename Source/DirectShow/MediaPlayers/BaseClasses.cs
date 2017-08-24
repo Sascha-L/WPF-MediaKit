@@ -872,7 +872,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var videoRenderer = filter as IMFVideoRenderer;
 
                 if (videoRenderer == null)
-                    throw new Exception("Could not QueryInterface for the IMFVideoRenderer");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IMFVideoRenderer");
 
                 /* Create a new EVR presenter */
                 presenter = EvrPresenter.CreateNew();
@@ -883,7 +883,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 var presenterSettings = presenter.VideoPresenter as IEVRPresenterSettings;
                 if (presenterSettings == null)
-                    throw new Exception("Could not QueryInterface for the IEVRPresenterSettings");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IEVRPresenterSettings");
 
                 presenterSettings.SetBufferCount(3);
 
@@ -894,7 +894,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var displayControl = presenter.VideoPresenter as IMFVideoDisplayControl;
 
                 if (displayControl == null)
-                    throw new Exception("Could not QueryInterface the IMFVideoDisplayControl");
+                    throw new WPFMediaKitException("Could not QueryInterface the IMFVideoDisplayControl");
 
                 /* Configure the presenter with our hWnd */
                 hr = displayControl.SetVideoWindow(handle);
@@ -918,12 +918,19 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// <returns>An initialized DirectShow VMR9 renderer</returns>
         private IBaseFilter CreateVideoMixingRenderer9(IGraphBuilder graph, int streamCount)
         {
-            var vmr9 = new VideoMixingRenderer9() as IBaseFilter;
+            IBaseFilter vmr9;
+            try
+            {
+                vmr9 = new VideoMixingRenderer9() as IBaseFilter;
+            }
+            catch (COMException ex)
+            {
+                throw new WPFMediaKitException("Could not create VMR9, do you have the grahics driver and DirectX properly installed?", ex);
+            }
 
             var filterConfig = vmr9 as IVMRFilterConfig9;
-
             if (filterConfig == null)
-                throw new Exception("Could not query filter configuration.");
+                throw new WPFMediaKitException("Could not query VMR9 filter configuration.");
 
             /* We will only have one video stream connected to the filter */
             int hr = filterConfig.SetNumberOfStreams(streamCount);
@@ -937,9 +944,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             /* Query the allocator interface */
             var vmrSurfAllocNotify = vmr9 as IVMRSurfaceAllocatorNotify9;
-
             if (vmrSurfAllocNotify == null)
-                throw new Exception("Could not query the VMR surface allocator.");
+                throw new WPFMediaKitException("Could not query the VMR surface allocator.");
 
             var allocator = new Vmr9Allocator();
 
@@ -954,7 +960,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             hr = graph.AddFilter(vmr9,
                                  string.Format("Renderer: {0}", VideoRendererType.VideoMixingRenderer9));
-
             DsError.ThrowExceptionForHR(hr);
 
             return vmr9;
