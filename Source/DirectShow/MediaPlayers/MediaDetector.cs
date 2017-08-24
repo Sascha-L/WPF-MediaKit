@@ -211,10 +211,10 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 LoadMedia();
             }
-            catch(Exception)
+            catch(Exception ex)
             {
                 FreeResources();
-                throw new Exception("Failed to load " + filename);
+                throw new Exception("Failed to load " + filename,ex);
             }
         }
 
