@@ -301,7 +301,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 /* If we have a null capture device, we have an issue */
                 if (m_captureDevice == null)
-                    throw new Exception(string.Format("Capture device {0} not found or could not be created", VideoCaptureSource));
+                    throw new WPFMediaKitException(string.Format("Capture device {0} not found or could not be created", VideoCaptureSource));
 
                 if (UseYuv && !EnableSampleGrabbing)
                 {
@@ -428,7 +428,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* If QueryInterface fails... */
             if (videoStreamConfig == null)
             {
-                throw new Exception("Failed to get IAMStreamConfig");
+                throw new WPFMediaKitException("Failed to get IAMStreamConfig");
             }
 
             /* The media type of the video */
