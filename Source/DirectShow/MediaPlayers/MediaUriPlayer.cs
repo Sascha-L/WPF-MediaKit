@@ -281,12 +281,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_graph = new FilterGraphNoThread() as IGraphBuilder;
 
                 if (m_graph == null)
-                    throw new Exception("Could not create a graph");
+                    throw new WPFMediaKitException("Could not create a graph");
 
                 var filterGraph = m_graph as IFilterGraph2;
 
                 if (filterGraph == null)
-                    throw new Exception("Could not QueryInterface for the IFilterGraph2");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IFilterGraph2");
 
                 IBaseFilter sourceFilter;
                 int hr;
@@ -426,7 +426,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 Marshal.ReleaseComObject(sourceFilter);
 
                 if (pinsRendered == 0)
-                    throw new Exception("Could not render any streams from the source Uri");
+                    throw new WPFMediaKitException("Could not render any streams from the source Uri");
 
 #if DEBUG
                 /* Adds the GB to the ROT so we can view
@@ -477,7 +477,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_graph = new FilterGraphNoThread() as IGraphBuilder;
 
                 if (m_graph == null)
-                    throw new Exception("Could not create a graph");
+                    throw new WPFMediaKitException("Could not create a graph");
 
                 try
                 {
@@ -495,7 +495,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var filterGraph = m_graph as IFilterGraph2;
 
                 if (filterGraph == null)
-                    throw new Exception("Could not QueryInterface for the IFilterGraph2");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IFilterGraph2");
 
                 IBaseFilter sourceFilter;
 
@@ -545,7 +545,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 Marshal.ReleaseComObject(sourceFilter);
 
                 if (pinsRendered == 0)
-                    throw new Exception("Could not render any streams from the source Uri");
+                    throw new WPFMediaKitException("Could not render any streams from the source Uri");
 
 #if DEBUG
                 /* Adds the GB to the ROT so we can view

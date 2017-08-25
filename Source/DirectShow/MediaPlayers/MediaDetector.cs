@@ -211,10 +211,10 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 LoadMedia();
             }
-            catch(Exception)
+            catch(Exception ex)
             {
                 FreeResources();
-                throw new Exception("Failed to load " + filename);
+                throw new WPFMediaKitException("Failed to load " + filename,ex);
             }
         }
 
@@ -335,10 +335,10 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             const int BITS_PER_PIXEL = 3;
 
             if (string.IsNullOrEmpty(m_filename))
-                throw new Exception("A media file must be successfully loaded first.");
+                throw new WPFMediaKitException("A media file must be successfully loaded first.");
 
             if (!HasVideo)
-                throw new Exception("The media does not have a video stream");
+                throw new WPFMediaKitException("The media does not have a video stream");
 
             double secondsPos = position.TotalSeconds;
 
