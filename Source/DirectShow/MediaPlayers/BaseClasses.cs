@@ -148,6 +148,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// </summary>
     public abstract class MediaPlayerBase : WorkDispatcherObject
     {
+        private const string VMR9_ERROR = "Do you have the grahics driver and DirectX properly installed?";
+
         [DllImport("user32.dll", SetLastError = false)]
         private static extern IntPtr GetDesktopWindow();
 
@@ -913,24 +915,37 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         /// <summary>
-        /// Creates a new VMR9 renderer and configures it with an allocator
+        /// Creates a new VMR9 renderer and configures it with an allocator.
+        /// <para>
+        /// COMException is transalted to the WPFMediaKitException.
+        /// </para>
         /// </summary>
-        /// <returns>An initialized DirectShow VMR9 renderer</returns>
+        /// <returns>An initialized DirectShow VMR9 renderer.</returns>
+        /// <exception cref="WPFMediaKitException">When creating of VMR9 fails.</exception>
         private IBaseFilter CreateVideoMixingRenderer9(IGraphBuilder graph, int streamCount)
         {
-            IBaseFilter vmr9;
             try
             {
-                vmr9 = new VideoMixingRenderer9() as IBaseFilter;
+                return CreateVideoMixingRenderer9Inner(graph, streamCount);
             }
             catch (COMException ex)
             {
-                throw new WPFMediaKitException("Could not create VMR9, do you have the grahics driver and DirectX properly installed?", ex);
+                throw new WPFMediaKitException("Could not create VMR9. " + VMR9_ERROR, ex);
             }
+        }
 
+        /// <summary>
+        /// Creates a new VMR9 renderer and configures it with an allocator.
+        /// </summary>
+        /// <returns>An initialized DirectShow VMR9 renderer.</returns>
+        /// <exception cref="COMException">When creating of VMR9 fails.</exception>
+        /// <exception cref="WPFMediaKitException">When creating of VMR9 fails.</exception>
+        private IBaseFilter CreateVideoMixingRenderer9Inner(IGraphBuilder graph, int streamCount)
+        {
+            IBaseFilter vmr9 = new VideoMixingRenderer9() as IBaseFilter;
             var filterConfig = vmr9 as IVMRFilterConfig9;
             if (filterConfig == null)
-                throw new WPFMediaKitException("Could not query VMR9 filter configuration.");
+                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + VMR9_ERROR);
 
             /* We will only have one video stream connected to the filter */
             int hr = filterConfig.SetNumberOfStreams(streamCount);
@@ -945,7 +960,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* Query the allocator interface */
             var vmrSurfAllocNotify = vmr9 as IVMRSurfaceAllocatorNotify9;
             if (vmrSurfAllocNotify == null)
-                throw new WPFMediaKitException("Could not query the VMR surface allocator.");
+                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + VMR9_ERROR);
 
             var allocator = new Vmr9Allocator();
 
