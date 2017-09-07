@@ -12,10 +12,21 @@
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal">
-        <Button x:Name="btnOpen" Click="btnOpen_Click" Content="Open..."  Padding="4" Margin="4"></Button>
-        <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" Padding="4" Margin="4"></Button>
-        </StackPanel>
-        <controls:MediaUriElement x:Name="mediaUriElement" Grid.Row="1" Margin="4"></controls:MediaUriElement>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="btnOpen" Click="btnOpen_Click" Content="Open..."  Padding="4" Margin="4"></Button>
+                <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" Padding="4" Margin="4"></Button>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Deeper Color: " />
+                <CheckBox x:Name="chkDeeperColor" />
+            </StackPanel>
+        </Grid>
+        <controls:MediaUriElement x:Name="mediaUriElement" DeeperColor="{Binding IsChecked, ElementName=chkDeeperColor}" Grid.Row="1" Margin="4" />
     </Grid>
 </Window>
