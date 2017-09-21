@@ -88,6 +88,8 @@
     <Compile Include="DirectShow\MediaPlayers\Vmr9Allocator.cs" />
     <Compile Include="DirectX\Direct3D.cs" />
     <Compile Include="Effects\DeeperColor.cs" />
+    <Compile Include="ILog.cs" />
+    <Compile Include="LogManager.cs" />
     <Compile Include="MediaFoundation\COMUtils.cs" />
     <Compile Include="MediaFoundation\EvrPresenter.cs" />
     <Compile Include="MediaFoundation\Interop.cs" />

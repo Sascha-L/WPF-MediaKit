@@ -675,7 +675,7 @@ namespace WPFMediaKit.DirectShow.Controls
                 pxWidth = d3dSource.PixelWidth;
                 pxHeight = d3dSource.PixelHeight;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }

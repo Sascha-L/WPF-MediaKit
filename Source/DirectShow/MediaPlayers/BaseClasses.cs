@@ -1248,10 +1248,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             var deviceList = (from d in devices
                               where d.Name == friendlyName
-                              select d);
-            DsDevice device = null;
-            if (deviceList.Count() > 0)
-                device = deviceList.Take(1).Single();
+                              select d).ToList();
+            DsDevice device = deviceList.FirstOrDefault();
 
             foreach (var item in deviceList)
             {
@@ -1268,10 +1266,14 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             var deviceList = (from d in devices
                               where d.DevicePath == devicePath
-                              select d);
-            DsDevice device = null;
-            if (deviceList.Count() > 0)
-                device = deviceList.Take(1).Single();
+                              select d).ToList();
+            DsDevice device = deviceList.FirstOrDefault();
+
+            foreach (var item in deviceList)
+            {
+                if (item != device)
+                    item.Dispose();
+            }
 
             return AddFilterByDevice(graphBuilder, device);
         }
@@ -1280,6 +1282,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         {
             if (graphBuilder == null)
                 throw new ArgumentNullException("graphBuilder");
+            if (device == null)
+                return null;
 
             var filterGraph = graphBuilder as IFilterGraph2;
 
@@ -1287,11 +1291,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 return null;
 
             IBaseFilter filter = null;
-            if (device != null)
-            {
-                int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
-                DsError.ThrowExceptionForHR(hr);
-            }
+            int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
+            DsError.ThrowExceptionForHR(hr);
             return filter;
         }
 

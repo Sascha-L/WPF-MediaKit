@@ -28,11 +28,13 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// </summary>
     public class MediaUriPlayer : MediaSeekingPlayer
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(MediaUriPlayer));
+
         /// <summary>
         /// The name of the default audio render.  This is the
         /// same on all versions of windows
         /// </summary>
-        private const string DEFAULT_AUDIO_RENDERER_NAME = "Default DirectSound Device";
+        public const string DEFAULT_AUDIO_RENDERER_NAME = "Default DirectSound Device";
 
         /// <summary>
         /// Set the default audio renderer property backing
@@ -130,12 +132,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             set
             {
                 VerifyAccess();
-
-                if (string.IsNullOrEmpty(value))
-                {
-                    value = DEFAULT_AUDIO_RENDERER_NAME;
-                }
-
                 m_audioRenderer = value;
             }
         }
@@ -344,46 +340,26 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 try
                 {
-                    // Set Audio Codec
-                    // Remove Pin
-                    var audioPinFrom = DirectShowLib.DsFindPin.ByName(sourceFilter, "Audio");
-                    IPin audioPinTo;
-                    if (audioPinFrom != null)
-                    {
-                        hr = audioPinFrom.ConnectedTo(out audioPinTo);
-                        if (hr >= 0 && audioPinTo != null)
-                        {
-                            PinInfo pInfo;
-                            audioPinTo.QueryPinInfo(out pInfo);
-                            FilterInfo fInfo;
-                            pInfo.filter.QueryFilterInfo(out fInfo);
+                    // use preffered audio filter
+                    InsertAudioFilter(sourceFilter, AudioDecoder);
+                }
+                catch (Exception ex)
+                {
+                    // codecs misconfigured
+                    log.Error(ex, "Cannot add audio decoder: {0}", AudioDecoder);
+                }
 
-                            DirectShowUtil.DisconnectAllPins(m_graph, pInfo.filter);
-                            m_graph.RemoveFilter(pInfo.filter);
-
-                            DsUtils.FreePinInfo(pInfo);
-                            Marshal.ReleaseComObject(fInfo.pGraph);
-                            Marshal.ReleaseComObject(audioPinTo);
-                            audioPinTo = null;
-                        }
-                        Marshal.ReleaseComObject(audioPinFrom);
-                        audioPinFrom = null;
-                    }
-
-                    DirectShowUtil.AddFilterToGraph(m_graph, AudioDecoder, Guid.Empty);
-
-
-                    /* Add our prefered audio renderer */
+                // use prefered audio renderer
+                try
+                {
                     InsertAudioRenderer(AudioRenderer);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // No Audio available
-                    Trace.TraceError("No Audio Device found!");
+                    log.Error(ex, "Cannot add audio render: {0}", AudioRenderer);
                 }
 
                 IBaseFilter renderer = CreateVideoRenderer(VideoRenderer, m_graph, 2);
-
 
                 /* We will want to enum all the pins on the source filter */
                 IEnumPins pinEnum;
@@ -481,15 +457,14 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 if (m_graph == null)
                     throw new WPFMediaKitException("Could not create a graph");
 
+                // use prefered audio renderer
                 try
                 {
-                    /* Add our prefered audio renderer */
                     InsertAudioRenderer(AudioRenderer);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // No Audio device found
-                    Trace.TraceError("No Audio Device found!");
+                    log.Error(ex, "Cannot add audio render: {0}", AudioRenderer);
                 }
 
                 IBaseFilter renderer = CreateVideoRenderer(VideoRenderer, m_graph, 2);
@@ -580,15 +555,49 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         /// <summary>
-        /// Inserts the audio renderer by the name of
-        /// the audio renderer that is passed
+        /// Inserts the audio renderer by the name.
         /// </summary>
-        protected virtual void InsertAudioRenderer(string audioDeviceName)
+        protected virtual void InsertAudioRenderer(string audioRenderer)
         {
-            if (m_graph == null)
+            if (string.IsNullOrEmpty(audioRenderer))
                 return;
 
-            AddFilterByName(m_graph, DirectShowLib.FilterCategory.AudioRendererCategory, audioDeviceName);
+            /* Add our prefered audio renderer */
+            AddFilterByName(m_graph, DirectShowLib.FilterCategory.AudioRendererCategory, audioRenderer);
+        }
+
+        protected virtual void InsertAudioFilter(IBaseFilter sourceFilter, string audioDecoder)
+        {
+            if (string.IsNullOrEmpty(audioDecoder))
+                return;
+
+            // Set Audio Codec
+            // Remove Pin
+            var audioPinFrom = DirectShowLib.DsFindPin.ByName(sourceFilter, "Audio");
+            IPin audioPinTo;
+            if (audioPinFrom != null)
+            {
+                int hr = audioPinFrom.ConnectedTo(out audioPinTo);
+                if (hr >= 0 && audioPinTo != null)
+                {
+                    PinInfo pInfo;
+                    audioPinTo.QueryPinInfo(out pInfo);
+                    FilterInfo fInfo;
+                    pInfo.filter.QueryFilterInfo(out fInfo);
+
+                    DirectShowUtil.DisconnectAllPins(m_graph, pInfo.filter);
+                    m_graph.RemoveFilter(pInfo.filter);
+
+                    DsUtils.FreePinInfo(pInfo);
+                    Marshal.ReleaseComObject(fInfo.pGraph);
+                    Marshal.ReleaseComObject(audioPinTo);
+                    audioPinTo = null;
+                }
+                Marshal.ReleaseComObject(audioPinFrom);
+                audioPinFrom = null;
+            }
+
+            DirectShowUtil.AddFilterToGraph(m_graph, audioDecoder, Guid.Empty);
         }
 
         /// <summary>
