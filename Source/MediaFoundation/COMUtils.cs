@@ -241,7 +241,7 @@ namespace WPFMediaKit.MediaFoundation
                         {
                             handle = LoadLibrary(dllName);
                             if (handle == IntPtr.Zero)
-                                throw new Win32Exception(String.Format("Can't load library '{0}'.", dllName), new Win32Exception());
+                                throw new Win32Exception(string.Format("Can't load library '{0}'.", dllName));
 
                             // Keep a reference to the dll until the process\AppDomain dies.
                             loadedDlls.Add(dllName, handle);

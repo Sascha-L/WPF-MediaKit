@@ -5,28 +5,46 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Test_Application"
         xmlns:controls="clr-namespace:WPFMediaKit.DirectShow.Controls;assembly=WPFMediaKit"
+        xmlns:players="clr-namespace:WPFMediaKit.DirectShow.MediaPlayers;assembly=WPFMediaKit"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
+    <Window.Resources>
+        <local:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="btnOpen" Click="btnOpen_Click" Content="Open..."  Padding="4" Margin="4"></Button>
-                <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" Padding="4" Margin="4"></Button>
+                <Button x:Name="btnOpen" Click="btnOpen_Click" Content="Open..."  Padding="4" Margin="4" />
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Deeper Color: " />
-                <CheckBox x:Name="chkDeeperColor" />
+                <TextBlock Text="Video Renderer:" VerticalAlignment="Center" Margin="4" />
+                <RadioButton Content="VMR9" IsChecked="{Binding VideoRenderer, ElementName=mediaUriElement, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static players:VideoRendererType.VideoMixingRenderer9}}"
+                             VerticalAlignment="Center" />
+                <RadioButton Content="EVR" IsChecked="{Binding VideoRenderer, ElementName=mediaUriElement, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static players:VideoRendererType.EnhancedVideoRenderer}}"
+                             VerticalAlignment="Center" Margin="4,0" />
+                <TextBlock Text="Deeper Color:" VerticalAlignment="Center" Margin="4" />
+                <CheckBox x:Name="chkDeeperColor" VerticalAlignment="Center" Margin="0,0,4,0" />
             </StackPanel>
         </Grid>
-        <controls:MediaUriElement x:Name="mediaUriElement" DeeperColor="{Binding IsChecked, ElementName=chkDeeperColor}" Grid.Row="1" Margin="4" />
+        <TextBlock x:Name="errorText" Grid.Row="1" TextWrapping="Wrap" Foreground="IndianRed" Margin="4" />
+        <controls:MediaUriElement x:Name="mediaUriElement" Grid.Row="1"
+                                  DeeperColor="{Binding IsChecked, ElementName=chkDeeperColor}"
+                                  Margin="4" />
+        <Slider x:Name="slider" Grid.Row="2" IsMoveToPointEnabled="True" Orientation="Horizontal" ValueChanged="slider_ValueChanged" Margin="4" />
+        <StackPanel Grid.Row="3" Orientation="Horizontal">
+            <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" MinWidth="50" Padding="4" Margin="4" />
+            <Button x:Name="btnPause" Click="btnPause_Click" Content="Pause" MinWidth="50" Padding="4" Margin="4" />
+        </StackPanel>
     </Grid>
 </Window>
