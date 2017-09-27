@@ -334,6 +334,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     }
                     Marshal.ReleaseComObject(videoPinFrom);
                     videoPinFrom = null;
+
+                    HasVideo = true;
+                }
+                else
+                {
+                    HasVideo = false;
                 }
 
                 DirectShowUtil.AddFilterToGraph(m_graph, VideoDecoder, Guid.Empty);
@@ -413,8 +419,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 #endif
                 /* Configure the graph in the base class */
                 SetupFilterGraph(m_graph);
-
-                HasVideo = true;
 
             }
             catch (Exception ex)
