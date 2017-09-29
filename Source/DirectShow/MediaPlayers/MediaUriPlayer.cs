@@ -334,6 +334,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     }
                     Marshal.ReleaseComObject(videoPinFrom);
                     videoPinFrom = null;
+
+                    HasVideo = true;
+                }
+                else
+                {
+                    HasVideo = false;
                 }
 
                 DirectShowUtil.AddFilterToGraph(m_graph, VideoDecoder, Guid.Empty);
@@ -413,9 +419,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 #endif
                 /* Configure the graph in the base class */
                 SetupFilterGraph(m_graph);
-
-                HasVideo = true;
-
             }
             catch (Exception ex)
             {
@@ -480,6 +483,18 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 int hr = filterGraph.AddSourceFilter(fileSource, fileSource, out sourceFilter);
                 DsError.ThrowExceptionForHR(hr);
 
+                /* Check for video stream*/
+                var videoPinFrom = DsFindPin.ByName(sourceFilter, "Video");
+                if (videoPinFrom != null)
+                {
+                    Marshal.ReleaseComObject(videoPinFrom);
+                    HasVideo = true;
+                }
+                else
+                {
+                    HasVideo = false;
+                }
+
                 /* We will want to enum all the pins on the source filter */
                 IEnumPins pinEnum;
 
@@ -532,7 +547,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 /* Configure the graph in the base class */
                 SetupFilterGraph(m_graph);
 
-                HasVideo = true;
                 /* Sets the NaturalVideoWidth/Height */
                 //SetNativePixelSizes(renderer);
             }
