@@ -434,8 +434,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 {
                     FreeResources();
 
+                    HasVideo = false;
+
                     /* Fire our failed event */
                     InvokeMediaFailed(new MediaFailedEventArgs(ex.Message, ex));
+
+                    return;
                 }
             }
 
