@@ -87,6 +87,9 @@ namespace WPFMediaKit.Threading
             }
         }
 
+        /// <summary>
+        /// Flag, that the dispatcher is in the shutting down process.
+        /// </summary>
         public bool ShuttingDown
         {
             get { return m_shuttingDown; }
@@ -94,13 +97,16 @@ namespace WPFMediaKit.Threading
         }
 
         /// <summary>
-        /// Flag to set if the dispatcher needs to shutdown
+        /// Flag that the dispather has shut down.
         /// </summary>
         public bool Shutdown
         {
             get { return m_shutdown; }
             private set { m_shutdown = value; }
         }
+
+        public bool ShuttingOrShutDown
+            => ShuttingDown || Shutdown;
 
         /// <summary>
         /// Async executes a method on our Dispatcher's thread

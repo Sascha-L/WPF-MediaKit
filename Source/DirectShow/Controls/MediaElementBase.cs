@@ -582,7 +582,7 @@ namespace WPFMediaKit.DirectShow.Controls
             SetBackBuffer(IntPtr.Zero);
             InvalidateVideoImage();
 
-            if(!MediaPlayerBase.Dispatcher.Shutdown || !MediaPlayerBase.Dispatcher.ShuttingDown)
+            if(!MediaPlayerBase.Dispatcher.ShuttingOrShutDown)
                 MediaPlayerBase.Dispatcher.BeginInvoke((Action)(delegate
                 {
                     MediaPlayerBase.Close();
@@ -597,7 +597,7 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         public virtual void Stop()
         {
-            if (!MediaPlayerBase.Dispatcher.Shutdown || !MediaPlayerBase.Dispatcher.ShuttingDown)
+            if (!MediaPlayerBase.Dispatcher.ShuttingOrShutDown)
                 MediaPlayerBase.Dispatcher.BeginInvoke((Action)(() => MediaPlayerBase.Stop()));
             
             SetIsPlaying(false);

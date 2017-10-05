@@ -68,7 +68,7 @@ namespace WPFMediaKit.DirectShow.Controls
         private void PlayerSetMediaPosition()
         {
             var position = MediaPosition;
-            if (MediaPlayerBase.Dispatcher.Shutdown || MediaPlayerBase.Dispatcher.ShuttingDown)
+            if (MediaPlayerBase.Dispatcher.ShuttingOrShutDown)
                 return;
 
             MediaPlayerBase.Dispatcher.BeginInvoke((Action)

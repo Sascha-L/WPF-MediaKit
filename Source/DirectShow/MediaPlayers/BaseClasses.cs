@@ -213,11 +213,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         private ICustomAllocator m_customAllocator;
 
         /// <summary>
-        /// Flag for the Dispose pattern
-        /// </summary>
-        private bool m_disposed;
-
-        /// <summary>
         /// The DirectShow filter graph reference
         /// </summary>
         private IFilterGraph m_graph;
@@ -524,8 +519,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     Dispatcher.BeginInvokeShutdown();
                 });
             }
-
-            m_disposed = true;
         }
 
         /// <summary>
