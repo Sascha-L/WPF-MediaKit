@@ -14,11 +14,6 @@ namespace WPFMediaKit.DirectShow.Controls
     /// </summary>
     public class MediaTimeToSeconds : IMultiValueConverter
     {
-        /// <summary>
-        /// One second in 100ns units
-        /// </summary>
-        protected const long DSHOW_ONE_SECOND_UNIT = 10000000;
-
         #region IMultiValueConverter Members
 
         /// <summary>
@@ -59,7 +54,7 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Only convert if we are dealing with MediaTime */
             if(mediaPlayer.CurrentPositionFormat == MediaPositionFormat.MediaTime)
             {
-                double seconds = (double)value / DSHOW_ONE_SECOND_UNIT;
+                double seconds = (double)value / MediaPlayerBase.DSHOW_ONE_SECOND_UNIT;
                 return seconds;
             }
 

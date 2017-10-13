@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -639,26 +638,13 @@ namespace WPFMediaKit.DirectShow.Controls
         }
 
         /// <summary>
-        /// Creates a cloned image of the current video frame.
+        /// Creates a cloned D3DImage image of the current video frame.
+        /// Return null in case of the frame is not valid.
         /// The image can be used thread-safe.
         /// </summary>
-        /// <returns></returns>
-        public Image CloneSingleFrameImage()
+        public D3DImage CloneSingleFrameD3DImage()
         {
-            // create new image and it's D3D source
-            Image img = new Image();
-            D3DImage d3dSource = new D3DImage();
-
-            // add the D3D source
-            img.Source = d3dSource;
-
-            // set default stretch
-            img.Stretch = (Stretch)StretchProperty.DefaultMetadata.DefaultValue;
-            img.StretchDirection = (StretchDirection)StretchProperty.DefaultMetadata.DefaultValue;
-
-            // store pixel width and height
-            int pxWidth = 0;
-            int pxHeight = 0;
+            D3DImage d3d = new D3DImage();
 
             /* We have this around a try/catch just in case we
              * lose the device and our Surface is invalid. The
@@ -666,26 +652,40 @@ namespace WPFMediaKit.DirectShow.Controls
              * to take place before it's removed */
             try
             {
-                // assign surface as back buffer
-                d3dSource.Lock();
-                d3dSource.SetBackBuffer(D3DResourceType.IDirect3DSurface9, m_pBackBuffer);
-                d3dSource.Unlock();
-
-                // update pixel width and height
-                pxWidth = d3dSource.PixelWidth;
-                pxHeight = d3dSource.PixelHeight;
+                D3DImageUtils.SetBackBufferWithLock(d3d, m_pBackBuffer);
             }
             catch (Exception)
             {
                 return null;
             }
+            return d3d;
+        }
+    }
 
-            // UIElement Layout Update
-            img.Measure(new Size(pxWidth, pxHeight));
-            img.Arrange(new Rect(new Size(pxWidth, pxHeight)));
-            img.UpdateLayout();
+    public static class D3DImageUtils
+    {
+        public static void AddDirtyRectAll(D3DImage d3d)
+        {
+            d3d.AddDirtyRect(new Int32Rect(0, 0, d3d.PixelWidth, d3d.PixelHeight));
+        }
 
-            return img;
+        /// <summary>
+        /// Convenient method for making frame shots.
+        /// For the exceptions, see <see cref="D3DImage.SetBackBuffer(D3DResourceType, IntPtr)". />
+        /// </summary>
+        public static void SetBackBufferWithLock(D3DImage d3d, IntPtr backBuffer)
+        {
+            try
+            {
+                d3d.Lock();
+                d3d.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer);
+                // necessary when rendering on WPF screen only
+                AddDirtyRectAll(d3d);
+            }
+            finally
+            {
+                d3d.Unlock();
+            }
         }
     }
 }

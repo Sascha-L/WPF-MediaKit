@@ -168,7 +168,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// <summary>
         /// One second in 100ns units
         /// </summary>
-        protected const long DSHOW_ONE_SECOND_UNIT = 10000000;
+        public const long DSHOW_ONE_SECOND_UNIT = 10000000;
 
         /// <summary>
         /// The IBasicAudio volume value for silence
