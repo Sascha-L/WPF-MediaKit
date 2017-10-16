@@ -299,7 +299,7 @@ namespace WPFMediaKit.DirectShow.Controls
 
             /* The reset event will block our thread while
              * we create an intialize the player */
-            var reset = new ManualResetEvent(false);
+            var reset = new ManualResetEventSlim(false);
 
             /* We need to create a new thread for our Dispatcher */
             var t = new Thread((ThreadStart) delegate
@@ -326,7 +326,7 @@ namespace WPFMediaKit.DirectShow.Controls
 
             /* We wait until our object is created and
              * the new Dispatcher is running */
-            reset.WaitOne();
+            reset.Wait();
 
             return detector;
         }
