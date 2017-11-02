@@ -290,9 +290,6 @@ namespace WPFMediaKit.DirectShow.Controls
             m_videoImage = new Image();
             m_d3dImage = new D3DImage();
 
-            /* We hook into this event to handle when a D3D device is lost */
-            D3DImage.IsFrontBufferAvailableChanged += D3DImageIsFrontBufferAvailableChanged;
-
             /* Set our default stretch value of our video */
             m_videoImage.Stretch = (Stretch)StretchProperty.DefaultMetadata.DefaultValue;
             m_videoImage.StretchDirection = (StretchDirection)StretchProperty.DefaultMetadata.DefaultValue;
@@ -314,21 +311,6 @@ namespace WPFMediaKit.DirectShow.Controls
             ToggleDeeperColorEffect((bool)DeeperColorProperty.DefaultMetadata.DefaultValue);
         }
 
-        /// <summary>
-        /// This should only fire when a D3D device is lost
-        /// </summary>
-        private void D3DImageIsFrontBufferAvailableChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (!D3DImage.IsFrontBufferAvailable)
-                return;
-
-            /* Flag that we have a new surface, even
-             * though we really don't */
-            m_newSurfaceAvailable = true;
-
-            /* Force feed the D3DImage the Surface pointer */
-            SetBackBufferInternal(m_pBackBuffer);
-        }
 
         private void CompositionTargetRendering(object sender, EventArgs e)
         {
@@ -366,7 +348,8 @@ namespace WPFMediaKit.DirectShow.Controls
             try
             {
                 D3DImage.Lock();
-                D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer);
+                //When front buffer is unavailable, use software render to keep rendering.
+                D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer, true);
             }
             catch
             { }
@@ -572,7 +555,7 @@ namespace WPFMediaKit.DirectShow.Controls
                 return;
 
             /* Only render the video image if possible, or if IsRenderingEnabled is true */
-            if (D3DImage.IsFrontBufferAvailable && IsRenderingEnabled && m_pBackBuffer != IntPtr.Zero)
+            if (IsRenderingEnabled && m_pBackBuffer != IntPtr.Zero)
             {
                 try
                 {
