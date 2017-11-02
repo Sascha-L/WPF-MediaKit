@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Windows;
+using WPFMediaKit.DirectShow.Controls;
+using System.Linq;
 
 namespace Test_Application
 {
@@ -16,6 +18,29 @@ namespace Test_Application
             this.Closing += MainWindow_Closing;
             this.mediaUriElement.MediaFailed += MediaUriElement_MediaFailed;
             this.mediaUriElement.MediaUriPlayer.MediaPositionChanged += MediaUriPlayer_MediaPositionChanged;
+
+            if (MultimediaUtil.VideoInputDevices.Any())
+            {
+                cobVideoSource.ItemsSource = MultimediaUtil.VideoInputNames;
+            }
+            SetCameraCaptureElementVisible(false);
+        }
+
+        private void SetCameraCaptureElementVisible(bool visible)
+        {
+            cameraCaptureElement.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+            mediaUriElement.Visibility = !visible ? Visibility.Visible : Visibility.Collapsed;
+            btnStop.IsEnabled = !visible;
+            btnPause.IsEnabled = !visible;
+            slider.IsEnabled = !visible;
+            if (visible)
+            {
+                btnStop_Click(null, null);
+            }
+            else
+            {
+                cobVideoSource.SelectedIndex = -1;
+            }
         }
 
         private void SetPlayButtons(bool playing)
@@ -37,6 +62,7 @@ namespace Test_Application
             if (result != true)
                 return;
             errorText.Text = null;
+            SetCameraCaptureElementVisible(false);
             mediaUriElement.Source = new Uri(dlg.FileName);
             SetPlayButtons(true);
         }
@@ -102,6 +128,14 @@ namespace Test_Application
                 return;
 
             this.Dispatcher.BeginInvoke(new Action(ChangeMediaPosition), null);
+        }
+
+        private void cobVideoSource_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (cobVideoSource.SelectedIndex < 0)
+                return;
+            SetCameraCaptureElementVisible(true);
+            cameraCaptureElement.VideoCaptureDevice = MultimediaUtil.VideoInputDevices[cobVideoSource.SelectedIndex];
         }
     }
 }
