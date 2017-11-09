@@ -59,6 +59,22 @@ namespace WPFMediaKit.DirectShow.Controls
 
         #endregion
 
+        /// <summary>
+        /// Step the count of frames.
+        /// this does only work correctly when the play method is called before
+        /// for example
+        /// Player.Play();                    
+        /// Player.FrameStep(1);
+        /// </summary>
+        /// <param name="framecount">count of frames to step</param>
+        public void FrameStep(int framecount)
+        {
+            MediaUriPlayer.Dispatcher.BeginInvoke((Action)delegate
+            {
+                MediaUriPlayer.StepFrame(framecount);
+            });
+        }
+
         #region AudioRenderer
 
         public static readonly DependencyProperty AudioRendererProperty =
