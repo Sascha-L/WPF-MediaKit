@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -36,7 +36,15 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         private double m_videoStreamLength;
         private Guid m_videoSubType;
         #endregion
-
+        
+        /// <summary>
+        /// The video framerate
+        /// </summary>
+        public double VideoFrameRate
+        {
+            get { return m_videoFrameRate; }
+        }
+        
         /// <summary>
         /// The video CODEC tag
         /// </summary>
@@ -169,6 +177,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             m_videoResolution = Size.Empty;
             m_videoStreamLength = 0;
             m_videoSubType = Guid.Empty;
+            m_videoFrameRate = 0;
             HasAudio = false;
             HasVideo = false;
 
@@ -257,6 +266,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 if(majorType == MediaType.Video)
                 {
                     ReadVideoFormat(mediaType);
+                    hr = m_mediaDet.get_FrameRate(out framerate);
+                    m_videoFrameRate = framerate;
                 }
                 else if(majorType == MediaType.Audio)
                 {
