@@ -35,6 +35,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         private Size m_videoResolution;
         private double m_videoStreamLength;
         private Guid m_videoSubType;
+        private double m_videoFrameRate;
         #endregion
         
         /// <summary>
