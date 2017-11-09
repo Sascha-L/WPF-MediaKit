@@ -137,5 +137,13 @@ namespace Test_Application
             SetCameraCaptureElementVisible(true);
             cameraCaptureElement.VideoCaptureDevice = MultimediaUtil.VideoInputDevices[cobVideoSource.SelectedIndex];
         }
+        
+        private void btnFrameStep_Click(object sender, RoutedEventArgs e)
+        {
+            if  (mediaUriElement.Source != null)
+            {
+                mediaUriElement.FrameStep(1);
+            }
+        }
     }
 }
