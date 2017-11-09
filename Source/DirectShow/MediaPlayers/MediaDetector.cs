@@ -258,6 +258,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 DsError.ThrowExceptionForHR(hr);
 
                 var mediaType = new AMMediaType();
+                double framerate;
 
                 /* Gets the AMMediaType so we can read some
                  * metadata on the stream */
