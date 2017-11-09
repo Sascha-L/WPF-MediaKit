@@ -50,6 +50,7 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal">
             <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" MinWidth="50" Padding="4" Margin="4" />
             <Button x:Name="btnPause" Click="btnPause_Click" Content="Pause" MinWidth="50" Padding="4" Margin="4" />
+            <Button x:Name="btnFrameStep" Click="btnFrameStep_Click" Content="Framestep +1" Padding="4" Margin="4"></Button>
         </StackPanel>
     </Grid>
 </Window>
