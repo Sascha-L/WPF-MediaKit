@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -57,6 +57,17 @@ namespace WPFMediaKit.DirectShow.Controls
         /// This is used to remember the value for when the control is loaded and unloaded.
         /// </summary>
         private bool m_renderOnCompositionTargetRenderingTemp;
+
+        /// <summary>
+        /// TryLock timeout for the invalidate video image. Low values means higher UI responsivity, but more video dropped frames.
+        /// </summary>
+        private Duration m_invalidateVideoImageLockDuration = new Duration(TimeSpan.FromMilliseconds(100));
+
+        /// <summary>
+        /// Flag to reduce redundant calls to the AddDirtyRect when the rendering thread is busy.
+        /// Int instead of bool for Interlocked support.
+        /// </summary>
+        private int m_videoImageInvalid = 1;
         #endregion
 
         #region Dependency Properties
@@ -279,9 +290,6 @@ namespace WPFMediaKit.DirectShow.Controls
             m_videoImage = new Image();
             m_d3dImage = new D3DImage();
 
-            /* We hook into this event to handle when a D3D device is lost */
-            D3DImage.IsFrontBufferAvailableChanged += D3DImageIsFrontBufferAvailableChanged;
-
             /* Set our default stretch value of our video */
             m_videoImage.Stretch = (Stretch)StretchProperty.DefaultMetadata.DefaultValue;
             m_videoImage.StretchDirection = (StretchDirection)StretchProperty.DefaultMetadata.DefaultValue;
@@ -303,21 +311,6 @@ namespace WPFMediaKit.DirectShow.Controls
             ToggleDeeperColorEffect((bool)DeeperColorProperty.DefaultMetadata.DefaultValue);
         }
 
-        /// <summary>
-        /// This should only fire when a D3D device is lost
-        /// </summary>
-        private void D3DImageIsFrontBufferAvailableChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (!D3DImage.IsFrontBufferAvailable)
-                return;
-
-            /* Flag that we have a new surface, even
-             * though we really don't */
-            m_newSurfaceAvailable = true;
-
-            /* Force feed the D3DImage the Surface pointer */
-            SetBackBufferInternal(m_pBackBuffer);
-        }
 
         private void CompositionTargetRendering(object sender, EventArgs e)
         {
@@ -325,43 +318,12 @@ namespace WPFMediaKit.DirectShow.Controls
         }
 
         /// <summary>
-        /// Cleans up any dead references we may have to any cloned renderers
-        /// </summary>
-        private void CleanZombieRenderers()
-        {
-            lock (m_clonedD3Drenderers)
-            {
-                var deadObjects = new List<WeakReference>();
-
-                for (int i = 0; i < m_clonedD3Drenderers.Count; i++)
-                {
-                    if (!m_clonedD3Drenderers[i].IsAlive)
-                        deadObjects.Add(m_clonedD3Drenderers[i]);
-                }
-
-                foreach (var deadGuy in deadObjects)
-                {
-                    m_clonedD3Drenderers.Remove(deadGuy);
-                }
-            }
-        }
-
-        /// <summary>
         /// Sets the backbuffer for any cloned D3DRenderers
         /// </summary>
         private void SetBackBufferForClones()
         {
-            lock (m_clonedD3Drenderers)
-            {
-                CleanZombieRenderers();
-
-                foreach (var rendererRef in m_clonedD3Drenderers)
-                {
-                    var renderer = rendererRef.Target as D3DRenderer;
-                    if (renderer != null)
-                        renderer.SetBackBuffer(m_pBackBuffer);
-                }
-            }
+            var backBuffer = m_pBackBuffer;
+            ForEachCloneD3DRenderer(r => r.SetBackBuffer(backBuffer));
         }
 
         /// <summary>
@@ -386,12 +348,17 @@ namespace WPFMediaKit.DirectShow.Controls
             try
             {
                 D3DImage.Lock();
-                D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer);
-                D3DImage.Unlock();
-                SetNaturalWidthHeight();
+                //When front buffer is unavailable, use software render to keep rendering.
+                D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer, true);
             }
-            catch (Exception ex)
+            catch
             { }
+            finally
+            {
+                D3DImage.Unlock();
+            }
+
+            SetNaturalWidthHeight();
 
             /* Clear our flag, so this won't be ran again
              * until a new surface is sent */
@@ -404,21 +371,47 @@ namespace WPFMediaKit.DirectShow.Controls
             SetNaturalVideoWidth(m_d3dImage.PixelWidth);
         }
 
+        private bool GetSetVideoImageInvalid(bool value)
+        {
+            int oldValue = Interlocked.Exchange(ref m_videoImageInvalid, value ? 1 : 0);
+            return oldValue == 1;
+        }
+
         /// <summary>
         /// Invalidates any possible cloned renderer we may have
         /// </summary>
         private void InvalidateClonedVideoImages()
         {
+            ForEachCloneD3DRenderer(r => r.InvalidateVideoImage());
+        }
+
+        private void ForEachCloneD3DRenderer(Action<D3DRenderer> action)
+        {
             lock (m_clonedD3Drenderers)
             {
-                CleanZombieRenderers();
-
+                bool needClean = false;
                 foreach (var rendererRef in m_clonedD3Drenderers)
                 {
                     var renderer = rendererRef.Target as D3DRenderer;
                     if (renderer != null)
-                        renderer.InvalidateVideoImage();
+                        action(renderer);
+                    else
+                        needClean = true;
                 }
+
+                if (needClean)
+                    CleanZombieRenderers();
+            }
+        }
+
+        /// <summary>
+        /// Cleans up any dead references we may have to any cloned renderers
+        /// </summary>
+        private void CleanZombieRenderers()
+        {
+            lock (m_clonedD3Drenderers)
+            {
+                m_clonedD3Drenderers.RemoveAll(c => !c.IsAlive);
             }
         }
 
@@ -533,6 +526,8 @@ namespace WPFMediaKit.DirectShow.Controls
 
         protected void InvalidateVideoImage()
         {
+            GetSetVideoImageInvalid(true);
+
             if (!m_renderOnCompositionTargetRendering)
                 InternalInvalidateVideoImage();
         }
@@ -545,7 +540,7 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Ensure we run on the correct Dispatcher */
             if(!D3DImage.Dispatcher.CheckAccess())
             {
-                D3DImage.Dispatcher.Invoke((Action)(() => InvalidateVideoImage()));
+                D3DImage.Dispatcher.BeginInvoke((Action)(() => InternalInvalidateVideoImage()));
                 return;
             }
 
@@ -553,21 +548,31 @@ namespace WPFMediaKit.DirectShow.Controls
              * this method will do the trick */
             SetBackBufferInternal(m_pBackBuffer);
 
+            // may save a few AddDirtyRect calls when the rendering thread is too busy
+            // or RenderOnCompositionTargetRendering is set but the video is not playing
+            bool invalid = GetSetVideoImageInvalid(false);
+            if (!invalid)
+                return;
+
             /* Only render the video image if possible, or if IsRenderingEnabled is true */
-            if (D3DImage.IsFrontBufferAvailable && IsRenderingEnabled && m_pBackBuffer != IntPtr.Zero)
+            if (IsRenderingEnabled && m_pBackBuffer != IntPtr.Zero)
             {
                 try
                 {
+                    if (!D3DImage.TryLock(InvalidateVideoImageLockDuration))
+                        return;
                     /* Invalidate the entire image */
-                    D3DImage.Lock();
                     D3DImage.AddDirtyRect(new Int32Rect(0, /* Left */
                                                         0, /* Top */
                                                         D3DImage.PixelWidth, /* Width */
                                                         D3DImage.PixelHeight /* Height */));
-                    D3DImage.Unlock();
                 }
                 catch (Exception)
                 { }
+                finally
+                {
+                    D3DImage.Unlock();
+                }
             }
 
             /* Invalidate all of our cloned D3DRenderers */
@@ -582,6 +587,19 @@ namespace WPFMediaKit.DirectShow.Controls
             /* Hook into the framework events */
             Loaded += D3DRendererLoaded;
             Unloaded += D3DRendererUnloaded;
+        }
+
+        /// <summary>
+        /// TryLock timeout for the invalidate video image. Low values means higher UI responsivity, but more video dropped frames.
+        /// </summary>
+        public Duration InvalidateVideoImageLockDuration
+        {
+            get { return m_invalidateVideoImageLockDuration; }
+            set {
+                if (value == null)
+                    throw new ArgumentNullException("InvalidateVideoImageLockDuration");
+                m_invalidateVideoImageLockDuration = value;
+            }
         }
 
         /// <summary>
@@ -600,6 +618,57 @@ namespace WPFMediaKit.DirectShow.Controls
 
             renderer.SetBackBuffer(m_pBackBuffer);
             return renderer;
+        }
+
+        /// <summary>
+        /// Creates a cloned D3DImage image of the current video frame.
+        /// Return null in case of the frame is not valid.
+        /// The image can be used thread-safe.
+        /// </summary>
+        public D3DImage CloneSingleFrameD3DImage()
+        {
+            D3DImage d3d = new D3DImage();
+
+            /* We have this around a try/catch just in case we
+             * lose the device and our Surface is invalid. The
+             * try/catch may not be needed, but testing needs
+             * to take place before it's removed */
+            try
+            {
+                D3DImageUtils.SetBackBufferWithLock(d3d, m_pBackBuffer);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            return d3d;
+        }
+    }
+
+    public static class D3DImageUtils
+    {
+        public static void AddDirtyRectAll(D3DImage d3d)
+        {
+            d3d.AddDirtyRect(new Int32Rect(0, 0, d3d.PixelWidth, d3d.PixelHeight));
+        }
+
+        /// <summary>
+        /// Convenient method for making frame shots.
+        /// For the exceptions, see <see cref="D3DImage.SetBackBuffer(D3DResourceType, IntPtr)". />
+        /// </summary>
+        public static void SetBackBufferWithLock(D3DImage d3d, IntPtr backBuffer)
+        {
+            try
+            {
+                d3d.Lock();
+                d3d.SetBackBuffer(D3DResourceType.IDirect3DSurface9, backBuffer);
+                // necessary when rendering on WPF screen only
+                AddDirtyRectAll(d3d);
+            }
+            finally
+            {
+                d3d.Unlock();
+            }
         }
     }
 }

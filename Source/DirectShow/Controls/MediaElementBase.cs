@@ -289,7 +289,7 @@ namespace WPFMediaKit.DirectShow.Controls
 
             if (MediaPlayerBase == null)
             {
-                throw new Exception("OnRequestMediaPlayer cannot return null");
+                throw new WPFMediaKitException("OnRequestMediaPlayer cannot return null");
             }
 
             /* Hook into the normal .NET events */
@@ -519,7 +519,7 @@ namespace WPFMediaKit.DirectShow.Controls
                     Pause();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("state");
             }
         }
 
@@ -582,7 +582,7 @@ namespace WPFMediaKit.DirectShow.Controls
             SetBackBuffer(IntPtr.Zero);
             InvalidateVideoImage();
 
-            if(!MediaPlayerBase.Dispatcher.Shutdown || !MediaPlayerBase.Dispatcher.ShuttingDown)
+            if(!MediaPlayerBase.Dispatcher.ShuttingOrShutDown)
                 MediaPlayerBase.Dispatcher.BeginInvoke((Action)(delegate
                 {
                     MediaPlayerBase.Close();
@@ -597,7 +597,7 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         public virtual void Stop()
         {
-            if (!MediaPlayerBase.Dispatcher.Shutdown || !MediaPlayerBase.Dispatcher.ShuttingDown)
+            if (!MediaPlayerBase.Dispatcher.ShuttingOrShutDown)
                 MediaPlayerBase.Dispatcher.BeginInvoke((Action)(() => MediaPlayerBase.Stop()));
             
             SetIsPlaying(false);

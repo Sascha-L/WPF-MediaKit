@@ -47,7 +47,7 @@ namespace WPFMediaKit.Threading
 
         private void StartNewDispatcherThread(ApartmentState apartmentState)
         {
-            var reset = new ManualResetEvent(false);
+            var reset = new ManualResetEventSlim();
 
             var t = new Thread((ThreadStart)delegate
             {
@@ -65,10 +65,10 @@ namespace WPFMediaKit.Threading
 
             /* Starts the thread and creates the object */
             t.Start();
-           
+
             /* We wait until our dispatcher is initialized and
              * the new Dispatcher is running */
-            reset.WaitOne();
+            reset.Wait();
         }
 
         protected WorkDispatcherObject()
