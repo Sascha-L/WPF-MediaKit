@@ -148,6 +148,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// </summary>
     public abstract class MediaPlayerBase : WorkDispatcherObject
     {
+        private const string VMR9_ERROR = "Do you have the grahics driver and DirectX properly installed?";
+
         [DllImport("user32.dll", SetLastError = false)]
         private static extern IntPtr GetDesktopWindow();
 
@@ -166,7 +168,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// <summary>
         /// One second in 100ns units
         /// </summary>
-        protected const long DSHOW_ONE_SECOND_UNIT = 10000000;
+        public const long DSHOW_ONE_SECOND_UNIT = 10000000;
 
         /// <summary>
         /// The IBasicAudio volume value for silence
@@ -209,11 +211,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// The custom DirectShow allocator
         /// </summary>
         private ICustomAllocator m_customAllocator;
-
-        /// <summary>
-        /// Flag for the Dispose pattern
-        /// </summary>
-        private bool m_disposed;
 
         /// <summary>
         /// The DirectShow filter graph reference
@@ -522,8 +519,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                     Dispatcher.BeginInvokeShutdown();
                 });
             }
-
-            m_disposed = true;
         }
 
         /// <summary>
@@ -864,7 +859,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             {
                 var evr = new EnhancedVideoRenderer();
                 filter = evr as IBaseFilter;
-
+                
                 int hr = graph.AddFilter(filter, string.Format("Renderer: {0}", VideoRendererType.EnhancedVideoRenderer));
                 DsError.ThrowExceptionForHR(hr);
 
@@ -872,7 +867,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var videoRenderer = filter as IMFVideoRenderer;
 
                 if (videoRenderer == null)
-                    throw new Exception("Could not QueryInterface for the IMFVideoRenderer");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IMFVideoRenderer");
 
                 /* Create a new EVR presenter */
                 presenter = EvrPresenter.CreateNew();
@@ -883,7 +878,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
                 var presenterSettings = presenter.VideoPresenter as IEVRPresenterSettings;
                 if (presenterSettings == null)
-                    throw new Exception("Could not QueryInterface for the IEVRPresenterSettings");
+                    throw new WPFMediaKitException("Could not QueryInterface for the IEVRPresenterSettings");
 
                 presenterSettings.SetBufferCount(3);
 
@@ -894,7 +889,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 var displayControl = presenter.VideoPresenter as IMFVideoDisplayControl;
 
                 if (displayControl == null)
-                    throw new Exception("Could not QueryInterface the IMFVideoDisplayControl");
+                    throw new WPFMediaKitException("Could not QueryInterface the IMFVideoDisplayControl");
 
                 /* Configure the presenter with our hWnd */
                 hr = displayControl.SetVideoWindow(handle);
@@ -913,17 +908,37 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         /// <summary>
-        /// Creates a new VMR9 renderer and configures it with an allocator
+        /// Creates a new VMR9 renderer and configures it with an allocator.
+        /// <para>
+        /// COMException is transalted to the WPFMediaKitException.
+        /// </para>
         /// </summary>
-        /// <returns>An initialized DirectShow VMR9 renderer</returns>
+        /// <returns>An initialized DirectShow VMR9 renderer.</returns>
+        /// <exception cref="WPFMediaKitException">When creating of VMR9 fails.</exception>
         private IBaseFilter CreateVideoMixingRenderer9(IGraphBuilder graph, int streamCount)
         {
-            var vmr9 = new VideoMixingRenderer9() as IBaseFilter;
+            try
+            {
+                return CreateVideoMixingRenderer9Inner(graph, streamCount);
+            }
+            catch (COMException ex)
+            {
+                throw new WPFMediaKitException("Could not create VMR9. " + VMR9_ERROR, ex);
+            }
+        }
 
+        /// <summary>
+        /// Creates a new VMR9 renderer and configures it with an allocator.
+        /// </summary>
+        /// <returns>An initialized DirectShow VMR9 renderer.</returns>
+        /// <exception cref="COMException">When creating of VMR9 fails.</exception>
+        /// <exception cref="WPFMediaKitException">When creating of VMR9 fails.</exception>
+        private IBaseFilter CreateVideoMixingRenderer9Inner(IGraphBuilder graph, int streamCount)
+        {
+            IBaseFilter vmr9 = new VideoMixingRenderer9() as IBaseFilter;
             var filterConfig = vmr9 as IVMRFilterConfig9;
-
             if (filterConfig == null)
-                throw new Exception("Could not query filter configuration.");
+                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + VMR9_ERROR);
 
             /* We will only have one video stream connected to the filter */
             int hr = filterConfig.SetNumberOfStreams(streamCount);
@@ -937,9 +952,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             /* Query the allocator interface */
             var vmrSurfAllocNotify = vmr9 as IVMRSurfaceAllocatorNotify9;
-
             if (vmrSurfAllocNotify == null)
-                throw new Exception("Could not query the VMR surface allocator.");
+                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + VMR9_ERROR);
 
             var allocator = new Vmr9Allocator();
 
@@ -954,7 +968,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             hr = graph.AddFilter(vmr9,
                                  string.Format("Renderer: {0}", VideoRendererType.VideoMixingRenderer9));
-
             DsError.ThrowExceptionForHR(hr);
 
             return vmr9;
@@ -1228,10 +1241,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             var deviceList = (from d in devices
                               where d.Name == friendlyName
-                              select d);
-            DsDevice device = null;
-            if (deviceList.Count() > 0)
-                device = deviceList.Take(1).Single();
+                              select d).ToList();
+            DsDevice device = deviceList.FirstOrDefault();
 
             foreach (var item in deviceList)
             {
@@ -1248,10 +1259,14 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             var deviceList = (from d in devices
                               where d.DevicePath == devicePath
-                              select d);
-            DsDevice device = null;
-            if (deviceList.Count() > 0)
-                device = deviceList.Take(1).Single();
+                              select d).ToList();
+            DsDevice device = deviceList.FirstOrDefault();
+
+            foreach (var item in deviceList)
+            {
+                if (item != device)
+                    item.Dispose();
+            }
 
             return AddFilterByDevice(graphBuilder, device);
         }
@@ -1260,6 +1275,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         {
             if (graphBuilder == null)
                 throw new ArgumentNullException("graphBuilder");
+            if (device == null)
+                return null;
 
             var filterGraph = graphBuilder as IFilterGraph2;
 
@@ -1267,11 +1284,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 return null;
 
             IBaseFilter filter = null;
-            if (device != null)
-            {
-                int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
-                DsError.ThrowExceptionForHR(hr);
-            }
+            int hr = filterGraph.AddSourceFilterForMoniker(device.Mon, null, device.Name, out filter);
+            DsError.ThrowExceptionForHR(hr);
             return filter;
         }
 

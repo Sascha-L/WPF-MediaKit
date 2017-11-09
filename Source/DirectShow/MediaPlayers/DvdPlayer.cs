@@ -625,7 +625,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_dvdControl = dvdNav as IDvdControl2;
 
                 if (m_dvdControl == null)
-                    throw new Exception("Could not QueryInterface the IDvdControl2 interface");
+                    throw new WPFMediaKitException("Could not QueryInterface the IDvdControl2 interface");
 
                 /* QueryInterface the DVDInfo2 */
                 m_dvdInfo = dvdNav as IDvdInfo2;
@@ -769,7 +769,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 }
 
                 if (dvdSubPicturePinOut == null)
-                    throw new Exception("Could not find the sub picture pin out");
+                    throw new WPFMediaKitException("Could not find the sub picture pin out");
 
                 /* Here we connec thte Dvd sub picture pin to the video renderer.
                  * This enables the overlays on Dvd menus and some closed 
@@ -782,7 +782,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                                                            PinDirection.Output,
                                                            m_graph);
                 if (line21Out == null)
-                    throw new Exception("Could not find the Line21 pin out");
+                    throw new WPFMediaKitException("Could not find the Line21 pin out");
 
                 /* We connect our line21Out out in to the dummy renderer
                  * this is what ultimatly makes interactive DVDs work with
@@ -794,7 +794,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_dummyRenderWindow = dummyRenderer as IVideoWindow;
 
                 if (m_dummyRenderWindow == null)
-                    throw new Exception("Could not QueryInterface for IVideoWindow");
+                    throw new WPFMediaKitException("Could not QueryInterface for IVideoWindow");
 
                 ConfigureDummyWindow();
 

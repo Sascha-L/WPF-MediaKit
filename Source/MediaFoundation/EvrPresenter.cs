@@ -147,14 +147,24 @@ namespace WPFMediaKit.MediaFoundation
             GC.SuppressFinalize(this);
         }
 
-        protected void Dispose(bool disp)
+        protected void Dispose(bool dispose)
+        {
+            if (dispose)
+            {
+                var settings = m_VideoPresenter as IEVRPresenterSettings;
+
+                if (settings != null)
+                    settings.RegisterCallback(null);
+            }
+            COMUtil.TryFinalRelease(ref m_VideoPresenter);
+        }
+
+        public void Stop()
         {
             var settings = m_VideoPresenter as IEVRPresenterSettings;
 
             if (settings != null)
                 settings.RegisterCallback(null);
-
-            COMUtil.TryFinalRelease(ref m_VideoPresenter);
         }
 
         #endregion
@@ -223,10 +233,10 @@ namespace WPFMediaKit.MediaFoundation
                 evrPresenter.VideoPresenter = presenter;
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 COMUtil.TryFinalRelease(ref presenter);
-                throw new Exception("Could not create IMFVideoPresenter", e);
+                throw new WPFMediaKitException("Could not create EnhancedVideoRenderer", ex);
             }
 
             return evrPresenter;

@@ -12,6 +12,10 @@ namespace WPFMediaKit.Threading
         public bool CancelShutdown { get; set; }
     }
 
+    /// <summary>
+    /// Custom dispatcher to deal with MTA and DShow,
+    /// see https://groups.google.com/forum/#!topic/wpf-disciples/kLdMgVzeWig
+    /// </summary>
     public class WorkDispatcher
     {
         /// <summary>
@@ -87,6 +91,9 @@ namespace WPFMediaKit.Threading
             }
         }
 
+        /// <summary>
+        /// Flag, that the dispatcher is in the shutting down process.
+        /// </summary>
         public bool ShuttingDown
         {
             get { return m_shuttingDown; }
@@ -94,13 +101,16 @@ namespace WPFMediaKit.Threading
         }
 
         /// <summary>
-        /// Flag to set if the dispatcher needs to shutdown
+        /// Flag that the dispather has shut down.
         /// </summary>
         public bool Shutdown
         {
             get { return m_shutdown; }
             private set { m_shutdown = value; }
         }
+
+        public bool ShuttingOrShutDown
+            => ShuttingDown || Shutdown;
 
         /// <summary>
         /// Async executes a method on our Dispatcher's thread
@@ -162,7 +172,7 @@ namespace WPFMediaKit.Threading
         /// <summary>
         /// Runs the message pump in the Dispatcher
         /// </summary>
-        public void Run(ManualResetEvent resetEvent)
+        public void Run(ManualResetEventSlim resetEvent)
         {
             if (m_threadId != 0)
                 throw new InvalidOperationException("Only one thread can execute in the dispatcher at a time");
@@ -175,6 +185,9 @@ namespace WPFMediaKit.Threading
             /* We need to store the thread id for some p/invoke later */
             m_threadId = GetCurrentThreadId();
 
+            // Call PeekMessage to create the message queue before the event is set
+            Msg msg;
+            PeekMessage(out msg, IntPtr.Zero, 0, 0, 0);
             resetEvent.Set();
 
             /* Begins the pump */
@@ -186,20 +199,18 @@ namespace WPFMediaKit.Threading
         /// </summary>
         private void DoManagedMessageQueue()
         {
-            var methods = new Queue<Delegate>();
+            Queue<Delegate> methods;
 
             lock (m_queueLock)
             {
+                if (m_queue.Count <= 0)
+                    return;
+
                 /* Copy our delegates over to safe queue
                  * so we can run the delegates outside
                  * this thread lock we got going on */
-                while (m_queue.Count > 0)
-                {
-                    var method = m_queue.Dequeue();
-
-                    if (method != null)
-                        methods.Enqueue(method);
-                }
+                methods = new Queue<Delegate>(m_queue);
+                m_queue.Clear();
             }
 
             /* Execute all the delegates in the queue */
@@ -212,7 +223,7 @@ namespace WPFMediaKit.Threading
                     if (method != null)
                         method.DynamicInvoke(null);
                 }
-                catch (Exception ex)
+                catch
                 {
                     throw;
                 }
@@ -292,6 +303,10 @@ namespace WPFMediaKit.Threading
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetMessage(out Msg lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PeekMessage(out Msg lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax, uint wRemoveMsg);
 
         [DllImport("user32.dll")]
         private static extern IntPtr DispatchMessage([In] ref Msg lpmsg);

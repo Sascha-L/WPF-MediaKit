@@ -9,8 +9,13 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 {
     public static class DirectShowUtil
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(DirectShowUtil));
+
         public static IBaseFilter AddFilterToGraph(IGraphBuilder graphBuilder, string strFilterName, Guid clsid)
         {
+            if (string.IsNullOrEmpty(strFilterName))
+                return null;
+
             try
             {
                 IBaseFilter NewFilter = null;
@@ -23,25 +28,25 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                         int hr = graphBuilder.AddFilter(NewFilter, strFilterName);
                         if (hr < 0)
                         {
-                            //Log.Error("Failed: Unable to add filter: {0} to graph", strFilterName);
+                            log.Error("Unable to add filter: {0} to graph", strFilterName);
                             NewFilter = null;
                         }
                         else
                         {
-                            //Log.Info("Added filter: {0} to graph", strFilterName);
+                            log.Debug("Added filter: {0} to graph", strFilterName);
                         }
                         break;
                     }
                 }
                 if (NewFilter == null)
                 {
-                    //Log.Error("Failed filter: {0} not found", strFilterName);
+                    log.Error("Failed filter: {0} not found", strFilterName);
                 }
                 return NewFilter;
             }
             catch (Exception ex)
             {
-                //Log.Error("Failed filter: {0} not found {0}", strFilterName, ex.Message);
+                log.Error(ex, "Error adding filter: {0} to graph", strFilterName);
                 return null;
             }
         }
@@ -168,7 +173,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                                 hr = graphBuilder.RemoveFilter(filter);
                                 DsError.ThrowExceptionForHR(hr);
                                 Marshal.ReleaseComObject(filter);
-                                System.Diagnostics.Trace.WriteLine("Remove filter from graph: {0}", info.achName);
+                                log.Debug("Remove filter from graph: {0}", info.achName);
                             }
                         }
                         else
@@ -177,13 +182,12 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                             hr = graphBuilder.RemoveFilter(filter);
                             DsError.ThrowExceptionForHR(hr);
                             int i = Marshal.ReleaseComObject(filter);
-                            System.Diagnostics.Trace.WriteLine(string.Format("Remove filter from graph: {0} {1}", info.achName, i));
+                            log.Debug(string.Format("Remove filter from graph: {0} {1}", info.achName, i));
                         }
                     }
-                    catch (Exception error)
+                    catch (Exception ex)
                     {
-                        System.Diagnostics.Trace.TraceError("Remove of filter: {0}, failed with code (HR): {1}, explanation: {2}", info.achName, hr.ToString(),
-                                   error.Message);
+                        log.Error(ex, "Remove of filter failed with code (HR): {0}, explanation: {1}", info.achName, hr.ToString());
                     }
                 }
             }

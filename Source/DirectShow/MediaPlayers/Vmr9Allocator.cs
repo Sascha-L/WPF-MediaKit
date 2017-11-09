@@ -11,7 +11,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// The Vmr9Allocator is a custom allocator for the VideoMixingRenderer9
     /// </summary>
     [ComVisible(true)]
-    public class Vmr9Allocator : IVMRSurfaceAllocator9, IVMRImagePresenter9, ICustomAllocator
+    public class Vmr9Allocator: IVMRSurfaceAllocator9, IVMRImagePresenter9, ICustomAllocator
     {
         /// <summary>
         /// Base constant for FAIL error codes
@@ -27,7 +27,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// Lock for shared resources
         /// </summary>
         private static object m_staticLock = new object();
-        
+
         /// <summary>
         /// Direct3D functions
         /// </summary>
@@ -57,6 +57,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// Part of the "Dispose" pattern
         /// </summary>
         private bool m_disposed;
+
+        public bool IsDisposed { get { return m_disposed; } }
 
         /// <summary>
         /// Applications use this interface to set a custom allocator-presenter 
