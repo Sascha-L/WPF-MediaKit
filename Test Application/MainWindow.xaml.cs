@@ -145,13 +145,5 @@ namespace Test_Application
                 mediaUriElement.FrameStep(1);
             }
         }
-
-        private void Window_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
-        {
-            if (mediaUriElement.Source != null)
-            {
-                mediaUriElement.FrameStep(1);
-            }
-        }
     }
 }
