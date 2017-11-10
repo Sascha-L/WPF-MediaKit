@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:WPFMediaKit.DirectShow.Controls;assembly=WPFMediaKit"
         xmlns:players="clr-namespace:WPFMediaKit.DirectShow.MediaPlayers;assembly=WPFMediaKit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="825">
+        Title="MainWindow" Height="450" Width="825" PreviewMouseWheel="Window_PreviewMouseWheel">
     <Window.Resources>
         <local:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
     </Window.Resources>
