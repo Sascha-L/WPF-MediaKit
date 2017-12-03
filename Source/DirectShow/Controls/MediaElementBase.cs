@@ -79,6 +79,21 @@ namespace WPFMediaKit.DirectShow.Controls
         #endregion
 
         #region Dependency Properties
+        #region PlayerState
+        public static readonly DependencyProperty PlayerStateProperty =
+            DependencyProperty.Register("PlayerState", typeof(PlayerState), typeof(MediaElementBase),
+                                new FrameworkPropertyMetadata(PlayerState.Closed));
+
+        /// <summary>
+        /// Get the current state of the media player
+        /// </summary>
+        public PlayerState PlayerState
+        {
+            get { return (PlayerState)GetValue(PlayerStateProperty); }
+            protected set { SetValue(PlayerStateProperty, value); }
+        }
+        #endregion
+
         #region UnloadedBehavior
 
         public static readonly DependencyProperty UnloadedBehaviorProperty =
@@ -297,6 +312,7 @@ namespace WPFMediaKit.DirectShow.Controls
             MediaPlayerBase.MediaClosed += OnMediaPlayerClosedPrivate;
             MediaPlayerBase.MediaFailed += OnMediaPlayerFailedPrivate;
             MediaPlayerBase.MediaEnded += OnMediaPlayerEndedPrivate;
+            MediaPlayerBase.PlayerStateChanged += OnPlayerStateChanged;
 
             /* These events fire when we get new D3Dsurfaces or frames */
             MediaPlayerBase.NewAllocatorFrame += OnMediaPlayerNewAllocatorFramePrivate;
@@ -370,6 +386,16 @@ namespace WPFMediaKit.DirectShow.Controls
         protected virtual void OnMediaPlayerNewAllocatorFrame()
         {
             InvalidateVideoImage();
+        }
+
+        /// <summary>
+        ///         /// Called when the state of the player has changed 
+        /// </summary>
+        /// <param name="oldState">Previous state</param>
+        /// <param name="newState">New State</param>
+        protected virtual void OnPlayerStateChanged(PlayerState oldState, PlayerState newState)
+        {
+            Dispatcher.BeginInvoke((Action<PlayerState, MediaElementBase>)((a, b) => b.PlayerState = a), newState, this);
         }
 
         /// <summary>
