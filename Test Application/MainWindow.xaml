@@ -29,6 +29,10 @@
                 <Label Content="Select camera:" VerticalAlignment="Center"/>
                 <ComboBox x:Name="cobVideoSource" Width="100" SelectionChanged="cobVideoSource_SelectionChanged" VerticalAlignment="Center"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <TextBlock Text="Playerstate:" VerticalAlignment="Center" Margin="3"/>
+                <TextBlock Text="{Binding ElementName=mediaUriElement,Path=PlayerState}" VerticalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Video Renderer:" VerticalAlignment="Center" Margin="4" />
                 <RadioButton Content="VMR9" IsChecked="{Binding VideoRenderer, ElementName=mediaUriElement, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static players:VideoRendererType.VideoMixingRenderer9}}"

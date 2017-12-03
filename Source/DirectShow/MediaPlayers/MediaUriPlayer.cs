@@ -134,6 +134,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             {
                 this.Play();
                 frameStep.Step(framecount, null);
+                this.PlayerState = PlayerState.SteppingFrames;
             }
         }
 
