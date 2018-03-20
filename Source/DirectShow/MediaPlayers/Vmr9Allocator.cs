@@ -13,6 +13,8 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     [ComVisible(true)]
     public class Vmr9Allocator: IVMRSurfaceAllocator9, IVMRImagePresenter9, ICustomAllocator
     {
+        internal const string VMR9_ERROR = "Do you have the graphics driver and DirectX properly installed?";
+
         /// <summary>
         /// Base constant for FAIL error codes
         /// </summary>
@@ -93,8 +95,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         static Vmr9Allocator()
         {
             m_hWnd = GetDesktopWindow();
-
-           
         }
 
         /// <summary>
@@ -103,10 +103,17 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         public Vmr9Allocator()
         {
             /* Use the 9Ex for Vista */
+            int hr = 0;
             if (IsVistaOrBetter)
-                Direct3D.Direct3DCreate9Ex(D3D_SDK_VERSION, out m_d3dEx);
+                hr = Direct3D.Direct3DCreate9Ex(D3D_SDK_VERSION, out m_d3dEx);
             else /* For XP */
                 m_d3d = Direct3D.Direct3DCreate9(D3D_SDK_VERSION);
+
+            if (m_d3dEx == null && m_d3d == null)
+            {
+                string hrStr = hr == 0 ? "" : $"({hr:X})";
+                throw new WPFMediaKitException($"Could not create IDirect3D9 {hrStr}. " + VMR9_ERROR);
+            }
 
             CreateDevice();
         }
@@ -302,7 +309,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// <returns>A pointer to the adaptor monitor</returns>
         private IntPtr GetAdapterMonitor(uint adapterOrdinal)
         {
-            IntPtr pMonitor = IsVistaOrBetter ? m_d3dEx.GetAdapterMonitor(adapterOrdinal) : m_d3d.GetAdapterMonitor(adapterOrdinal);
+            IntPtr pMonitor = m_d3dEx != null ? m_d3dEx.GetAdapterMonitor(adapterOrdinal) : m_d3d.GetAdapterMonitor(adapterOrdinal);
 
             return pMonitor;
         }
@@ -546,18 +553,22 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             IntPtr dev;
 
             /* Windows Vista runs much more performant with the IDirect3DDevice9Ex */
-            if (IsVistaOrBetter)
+            int hr = 0;
+            if (m_d3dEx != null)
             {
-                m_d3dEx.CreateDeviceEx(0, D3DDEVTYPE.D3DDEVTYPE_HAL, m_hWnd,
+                hr = m_d3dEx.CreateDeviceEx(0, D3DDEVTYPE.D3DDEVTYPE_HAL, m_hWnd,
                   CreateFlags.D3DCREATE_SOFTWARE_VERTEXPROCESSING | CreateFlags.D3DCREATE_MULTITHREADED,
                   ref param, IntPtr.Zero, out dev);
             }
             else/* Windows XP */
             {
-                m_d3d.CreateDevice(0, D3DDEVTYPE.D3DDEVTYPE_HAL, m_hWnd,
+                hr = m_d3d.CreateDevice(0, D3DDEVTYPE.D3DDEVTYPE_HAL, m_hWnd,
                   CreateFlags.D3DCREATE_SOFTWARE_VERTEXPROCESSING | CreateFlags.D3DCREATE_MULTITHREADED,
                   ref param, out dev);
             }
+
+            if (dev == IntPtr.Zero)
+                throw new WPFMediaKitException($"Cannot create D3D device ({hr:X}). Do you have D3D acceleration enabled for your graphics card?");
 
             m_device = (IDirect3DDevice9)Marshal.GetObjectForIUnknown(dev);
             Marshal.Release(dev);

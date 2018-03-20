@@ -148,8 +148,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// </summary>
     public abstract class MediaPlayerBase : WorkDispatcherObject
     {
-        private const string VMR9_ERROR = "Do you have the grahics driver and DirectX properly installed?";
-
         [DllImport("user32.dll", SetLastError = false)]
         private static extern IntPtr GetDesktopWindow();
 
@@ -923,7 +921,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             }
             catch (COMException ex)
             {
-                throw new WPFMediaKitException("Could not create VMR9. " + VMR9_ERROR, ex);
+                throw new WPFMediaKitException("Could not create VMR9. " + Vmr9Allocator.VMR9_ERROR, ex);
             }
         }
 
@@ -938,7 +936,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             IBaseFilter vmr9 = new VideoMixingRenderer9() as IBaseFilter;
             var filterConfig = vmr9 as IVMRFilterConfig9;
             if (filterConfig == null)
-                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + VMR9_ERROR);
+                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + Vmr9Allocator.VMR9_ERROR);
 
             /* We will only have one video stream connected to the filter */
             int hr = filterConfig.SetNumberOfStreams(streamCount);
@@ -953,7 +951,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* Query the allocator interface */
             var vmrSurfAllocNotify = vmr9 as IVMRSurfaceAllocatorNotify9;
             if (vmrSurfAllocNotify == null)
-                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + VMR9_ERROR);
+                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + Vmr9Allocator.VMR9_ERROR);
 
             var allocator = new Vmr9Allocator();
 
