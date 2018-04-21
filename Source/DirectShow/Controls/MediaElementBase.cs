@@ -570,8 +570,11 @@ namespace WPFMediaKit.DirectShow.Controls
         public virtual void Pause()
         {
             MediaPlayerBase.EnsureThread(DefaultApartmentState);
-            MediaPlayerBase.Dispatcher.BeginInvoke((Action)(() => MediaPlayerBase.Pause()));
-            SetIsPlaying(false);
+            MediaPlayerBase.Dispatcher.BeginInvoke((Action)delegate
+            {
+                MediaPlayerBase.Pause();
+                Dispatcher.BeginInvoke((Action)(() => SetIsPlaying(false)));
+            });
         }
 
         /// <summary>
