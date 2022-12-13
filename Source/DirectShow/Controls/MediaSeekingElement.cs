@@ -24,6 +24,24 @@ namespace WPFMediaKit.DirectShow.Controls
                                         new FrameworkPropertyMetadata((long)0,
                                                                       new PropertyChangedCallback(OnMediaPositionChanged)));
 
+        public static readonly RoutedEvent MediaPositionChangedEvent = EventManager.RegisterRoutedEvent("MediaPositionChanged", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MediaSeekingElement));
+
+        /// <summary>
+        /// Is invoked whenever the current media position is changed.
+        /// </summary>
+        public event RoutedEventHandler MediaPositionChanged
+        {
+            add
+            {
+                this.AddHandler(MediaPositionChangedEvent, value);
+            }
+            remove
+            {
+                this.RemoveHandler(MediaPositionChangedEvent, value);
+            }
+        }
+         
+
         /// <summary>
         /// Gets or sets the media position in units of CurrentPositionFormat
         /// </summary>
@@ -59,10 +77,12 @@ namespace WPFMediaKit.DirectShow.Controls
         protected void SetMediaPositionInternal(long value)
         {
             /* Flag that we want to ignore the next
-             * PropertyChangedCallback */
-            m_ignorePropertyChangedCallback = true;
+             *PropertyChangedCallback
+             * If the player is not currently paused!(otherwise it would only react every second seek) */
+            m_ignorePropertyChangedCallback = this.PlayerState != PlayerState.Paused;
 
             MediaPosition = value;
+            RaiseEvent(new RoutedEventArgs(MediaPositionChangedEvent, this));
         }
 
         private void PlayerSetMediaPosition()
@@ -298,27 +318,19 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         protected override void OnMediaPlayerOpened()
         {
-            /* Pull out our values of our properties */
+            MediaPositionFormat positionFormat = MediaSeekingPlayer.CurrentPositionFormat;
             long duration = MediaSeekingPlayer.Duration;
-            long position = 0;// MediaSeekingPlayer.MediaPosition;
-            double rate = 1; // MediaSeekingPlayer.SpeedRatio;
-            double volume = 1;
-
-            var positionFormat = MediaSeekingPlayer.CurrentPositionFormat;
 
             Dispatcher.BeginInvoke((Action)delegate
             {
-                position = MediaPosition;
                 /* Set our DP values */
                 SetCurrentPositionFormat(positionFormat);
+                SetMediaPositionInternal(0);
                 SetMediaDuration(duration);
-                //SetMediaPositionInternal(position);
-                //SpeedRatio = rate;
-                rate = SpeedRatio;
-                volume = Volume;
+                double rate = SpeedRatio;
+                double volume = Volume;
                 MediaSeekingPlayer.Dispatcher.BeginInvoke((Action) delegate
                 {
-                    //MediaSeekingPlayer.MediaPosition = position;
                     MediaSeekingPlayer.SpeedRatio = rate;
                     MediaPlayerBase.Volume = volume;
                 });

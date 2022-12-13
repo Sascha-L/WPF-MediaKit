@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:WPFMediaKit.DirectShow.Controls;assembly=WPFMediaKit"
         xmlns:players="clr-namespace:WPFMediaKit.DirectShow.MediaPlayers;assembly=WPFMediaKit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="825">
+        Title="MainWindow" Height="450" Width="825" >
     <Window.Resources>
         <local:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
     </Window.Resources>
@@ -29,6 +29,10 @@
                 <Label Content="Select camera:" VerticalAlignment="Center"/>
                 <ComboBox x:Name="cobVideoSource" Width="100" SelectionChanged="cobVideoSource_SelectionChanged" VerticalAlignment="Center"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <TextBlock Text="Playerstate:" VerticalAlignment="Center" Margin="3"/>
+                <TextBlock Text="{Binding ElementName=mediaUriElement,Path=PlayerState}" VerticalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Video Renderer:" VerticalAlignment="Center" Margin="4" />
                 <RadioButton Content="VMR9" IsChecked="{Binding VideoRenderer, ElementName=mediaUriElement, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static players:VideoRendererType.VideoMixingRenderer9}}"
@@ -42,7 +46,7 @@
         <TextBlock x:Name="errorText" Grid.Row="1" TextWrapping="Wrap" Foreground="IndianRed" Margin="4" />
         <controls:MediaUriElement x:Name="mediaUriElement" Grid.Row="1"
                                   DeeperColor="{Binding IsChecked, ElementName=chkDeeperColor}"
-                                  Margin="4" />
+                                  Margin="4" SpeedRatio="{Binding Path=Value, ElementName=ratioSlider}" />
         <controls:VideoCaptureElement x:Name="cameraCaptureElement" Grid.Row="1" EnableSampleGrabbing="False" Visibility="Collapsed"
                                       DeeperColor="{Binding IsChecked, ElementName=chkDeeperColor}"
                                       Margin="4"/>
@@ -50,6 +54,15 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal">
             <Button x:Name="btnStop" Click="btnStop_Click" Content="Stop" MinWidth="50" Padding="4" Margin="4" />
             <Button x:Name="btnPause" Click="btnPause_Click" Content="Pause" MinWidth="50" Padding="4" Margin="4" />
+            <Button x:Name="btnFrameStep" Click="btnFrameStep_Click" Content="Framestep +1" Padding="4" Margin="4"></Button>
+            <Border BorderBrush="Gray" Background="LightGray" BorderThickness="1" Height="26">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Speedratio" Margin="3,0,0,0"/>
+                    <TextBlock Text="{Binding Path=Value,ElementName=ratioSlider}" Margin="3,0,0,0" Width="20"/>
+                    <Slider Minimum="0.5" Maximum="4" TickFrequency=".5" IsSnapToTickEnabled="True" Width="100" Value="1" x:Name="ratioSlider"/>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </Grid>
 </Window>

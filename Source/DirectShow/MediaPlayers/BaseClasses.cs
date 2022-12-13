@@ -25,6 +25,15 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         Pause
     }
 
+    public enum PlayerState
+    {
+        Closed,
+        Playing,
+        Paused,
+        Stopped,
+        SteppingFrames
+    }
+
     /// <summary>
     /// The types of position formats that
     /// are available for seeking media
@@ -148,8 +157,6 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
     /// </summary>
     public abstract class MediaPlayerBase : WorkDispatcherObject
     {
-        private const string VMR9_ERROR = "Do you have the grahics driver and DirectX properly installed?";
-
         [DllImport("user32.dll", SetLastError = false)]
         private static extern IntPtr GetDesktopWindow();
 
@@ -254,6 +261,11 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// Our Win32 timer to poll the DirectShow graph
         /// </summary>
         private System.Timers.Timer m_timer;
+
+        /// <summary>
+        /// The current state of the player
+        /// </summary>
+        private PlayerState m_playerState = PlayerState.Closed;
 
         /// <summary>
         /// This objects last stand
@@ -464,6 +476,22 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         }
 
         /// <summary>
+        /// Get the current state of the player
+        /// </summary>
+        public virtual PlayerState PlayerState
+        {
+            get { return this.m_playerState; }
+            protected set
+            {
+                PlayerState oldVal = m_playerState;
+                m_playerState = value;
+
+                if (PlayerStateChanged != null && oldVal != value)
+                    PlayerStateChanged(oldVal, value);
+            }
+        }
+
+        /// <summary>
         /// Event notifies when there is a new video frame
         /// to be rendered
         /// </summary>
@@ -473,6 +501,11 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
         /// Event notifies when there is a new surface allocated
         /// </summary>
         public event NewAllocatorSurfaceDelegate NewAllocatorSurface;
+
+        /// <summary>
+        /// Event notifies when the player changes state
+        /// </summary>
+        public event Action<PlayerState, PlayerState> PlayerStateChanged;
 
         /// <summary>
         /// Frees any remaining memory
@@ -923,7 +956,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             }
             catch (COMException ex)
             {
-                throw new WPFMediaKitException("Could not create VMR9. " + VMR9_ERROR, ex);
+                throw new WPFMediaKitException("Could not create VMR9. " + Vmr9Allocator.VMR9_ERROR, ex);
             }
         }
 
@@ -938,7 +971,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             IBaseFilter vmr9 = new VideoMixingRenderer9() as IBaseFilter;
             var filterConfig = vmr9 as IVMRFilterConfig9;
             if (filterConfig == null)
-                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + VMR9_ERROR);
+                throw new WPFMediaKitException("Could not query VMR9 filter configuration. " + Vmr9Allocator.VMR9_ERROR);
 
             /* We will only have one video stream connected to the filter */
             int hr = filterConfig.SetNumberOfStreams(streamCount);
@@ -953,7 +986,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             /* Query the allocator interface */
             var vmrSurfAllocNotify = vmr9 as IVMRSurfaceAllocatorNotify9;
             if (vmrSurfAllocNotify == null)
-                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + VMR9_ERROR);
+                throw new WPFMediaKitException("Could not query the VMR surface allocator. " + Vmr9Allocator.VMR9_ERROR);
 
             var allocator = new Vmr9Allocator();
 
@@ -987,7 +1020,11 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             }
 
             if (m_mediaControl != null)
+            {
                 m_mediaControl.Run();
+                PlayerState = PlayerState.Playing;
+            }
+                
         }
 
         /// <summary>
@@ -1015,7 +1052,9 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_mediaControl.GetState(0, out filterState);
 
                 while (filterState != FilterState.Stopped)
-                    m_mediaControl.GetState(0, out filterState);
+                    m_mediaControl.GetState(2, out filterState);
+
+                PlayerState = PlayerState.Stopped;
             }
         }
 
@@ -1027,6 +1066,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             VerifyAccess();
             StopInternal();
             FreeResources();
+            PlayerState = PlayerState.Closed;
         }
 
         /// <summary>
@@ -1039,6 +1079,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             if (m_mediaControl != null)
             {
                 m_mediaControl.Pause();
+                PlayerState = PlayerState.Paused;
             }
         }
 
