@@ -318,27 +318,19 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         protected override void OnMediaPlayerOpened()
         {
-            /* Pull out our values of our properties */
+            MediaPositionFormat positionFormat = MediaSeekingPlayer.CurrentPositionFormat;
             long duration = MediaSeekingPlayer.Duration;
-            long position = 0;// MediaSeekingPlayer.MediaPosition;
-            double rate = 1; // MediaSeekingPlayer.SpeedRatio;
-            double volume = 1;
-
-            var positionFormat = MediaSeekingPlayer.CurrentPositionFormat;
 
             Dispatcher.BeginInvoke((Action)delegate
             {
-                position = MediaPosition;
                 /* Set our DP values */
                 SetCurrentPositionFormat(positionFormat);
+                SetMediaPositionInternal(0);
                 SetMediaDuration(duration);
-                //SetMediaPositionInternal(position);
-                //SpeedRatio = rate;
-                rate = SpeedRatio;
-                volume = Volume;
+                double rate = SpeedRatio;
+                double volume = Volume;
                 MediaSeekingPlayer.Dispatcher.BeginInvoke((Action) delegate
                 {
-                    //MediaSeekingPlayer.MediaPosition = position;
                     MediaSeekingPlayer.SpeedRatio = rate;
                     MediaPlayerBase.Volume = volume;
                 });
