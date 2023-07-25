@@ -595,11 +595,7 @@ namespace WPFMediaKit.DirectShow.Controls
         public Duration InvalidateVideoImageLockDuration
         {
             get { return m_invalidateVideoImageLockDuration; }
-            set {
-                if (value == null)
-                    throw new ArgumentNullException("InvalidateVideoImageLockDuration");
-                m_invalidateVideoImageLockDuration = value;
-            }
+            set { m_invalidateVideoImageLockDuration = value; }
         }
 
         /// <summary>

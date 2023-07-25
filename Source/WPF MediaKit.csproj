@@ -1,47 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{73154957-3D91-48DA-8068-D425B523ED93}</ProjectGuid>
+    <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
     <OutputType>library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWpf>true</UseWpf>
+
+    <LangVersion>10</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting> <!-- Support for building on Linux -->
+
     <RootNamespace>WPFMediaKit</RootNamespace>
     <AssemblyName>WPFMediaKit</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WarningLevel>4</WarningLevel>
-    <TargetFrameworkProfile />
+    <ProjectGuid>{73154957-3D91-48DA-8068-D425B523ED93}</ProjectGuid>
+    <Version>2.3.0</Version>
+
+    <Title>WPF MediaKit</Title>
+    <Description>A library to quickly build DirectShow and MediaFoundation media player controls in WPF. The kit comes with a MediaElement replacement, a VideoCaptureElement for web cams and a DVDPlayerElement that plays DVDs and supports interactive menus.</Description>
+    <PackageReleaseNotes>Added .NET 6 compatibility</PackageReleaseNotes>
+    <Company>WPF MediaKit Team</Company>
+    <Authors>WPF MediaKit Team</Authors>
+    <Copyright>Copyright © 2015-2017 by WPF MediaKit Team</Copyright>
+    <PackageProjectUrl>https://github.com/Sascha-L/WPF-MediaKit</PackageProjectUrl>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>wpf video directshow evr dvd player media MediaFoundation</PackageTags>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>portable</DebugType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>default</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="DirectShowLib-2005, Version=2.1.0.26626, Culture=neutral, PublicKeyToken=67e7b740cdfc2d3f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Assemblies\DirectShowLib-2005.dll</HintPath>
-    </Reference>
+    <None Remove="Effects\DeeperColor.ps" />
+    <Resource Include="Effects\DeeperColor.ps" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assemblies/DirectShowLib-2005.dll" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net462'))">
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -51,89 +62,53 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Xaml">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
+
   <ItemGroup>
-    <Page Include="Themes\Generic.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MediaDetectorGeneric.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DirectShow\Controls\D3DRenderer.cs" />
-    <Compile Include="DirectShow\Controls\DvdPlayerElement.cs" />
-    <Compile Include="DirectShow\Controls\MediaDetectorElement.cs" />
-    <Compile Include="DirectShow\Controls\MediaElementBase.cs" />
-    <Compile Include="DirectShow\Controls\MediaSeekingElement.cs" />
-    <Compile Include="DirectShow\Controls\MediaUriElement.cs" />
-    <Compile Include="DirectShow\Controls\MultimediaUtil.cs" />
-    <Compile Include="DirectShow\Controls\ValueConverters.cs" />
-    <Compile Include="DirectShow\Controls\VideoCaptureElement.cs" />
-    <Compile Include="DirectShow\MediaPlayers\BaseClasses.cs" />
-    <Compile Include="DirectShow\MediaPlayers\ClassId.cs" />
-    <Compile Include="DirectShow\MediaPlayers\DirectShowUtil.cs" />
-    <Compile Include="DirectShow\MediaPlayers\DvdPlayer.cs" />
-    <Compile Include="DirectShow\MediaPlayers\FilterFromFile.cs" />
-    <Compile Include="DirectShow\MediaPlayers\Filters.cs" />
-    <Compile Include="DirectShow\MediaPlayers\MediaDetector.cs" />
-    <Compile Include="DirectShow\MediaPlayers\MediaSeekingPlayer.cs" />
-    <Compile Include="DirectShow\MediaPlayers\MediaUriPlayer.cs" />
-    <Compile Include="DirectShow\MediaPlayers\PropertyPageHelper.cs" />
-    <Compile Include="DirectShow\MediaPlayers\VideoCapturePlayer.cs" />
-    <Compile Include="DirectShow\MediaPlayers\Vmr9Allocator.cs" />
-    <Compile Include="DirectX\Direct3D.cs" />
-    <Compile Include="Effects\DeeperColor.cs" />
-    <Compile Include="ILog.cs" />
-    <Compile Include="LogManager.cs" />
-    <Compile Include="MediaFoundation\COMUtils.cs" />
-    <Compile Include="MediaFoundation\EvrPresenter.cs" />
-    <Compile Include="MediaFoundation\Interop.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-    <Compile Include="Threading\WorkDispatcher.cs" />
-    <Compile Include="Threading\WorkDispatcherObject.cs" />
-    <Compile Include="WPFMediaKitException.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Resource Include="Effects\DeeperColor.ps" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <AppDesigner Include="Properties\" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="Assemblies\DirectShowLib-2005.dll" />
-    <Content Include="Effects\DeeperColor.fx" />
+    <None Include="..\License.txt">
+      <Pack>True</Pack>
+      <PackagePath>$(PackageLicenseFile)</PackagePath>
+      <Visible>False</Visible>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>$(PackageReadmeFile)</PackagePath>
+      <Visible>False</Visible>
+    </None>
+    <None Include="..\nuget\WPFMediaKit.targets">
+      <Pack>True</Pack>
+      <PackagePath>build\WPFMediaKit.targets</PackagePath>
+    </None>
+    <None Include="Assemblies\DirectShowLib-2005.dll">
+      <Pack>True</Pack>
+      <PackagePath>build\DirectShowLib-2005.dll</PackagePath>
+      <Visible>False</Visible>
+    </None>
+    <None Include="..\EVR Presenter\bin\Release\x86\EVRPresenter32.dll">
+      <Pack>True</Pack>
+      <PackagePath>build\EVRPresenter32.dll</PackagePath>
+      <Visible>False</Visible>
+    </None>
+    <None Include="..\EVR Presenter\bin\Release\x64\EVRPresenter64.dll">
+      <Pack>True</Pack>
+      <PackagePath>build\EVRPresenter64.dll</PackagePath>
+      <Visible>False</Visible>
+    </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
