@@ -93,21 +93,21 @@
     </None>
     <None Include="..\nuget\WPFMediaKit.targets">
       <Pack>True</Pack>
-      <PackagePath>build\WPFMediaKit.targets</PackagePath>
+      <PackagePath>buildTransitive\WPFMediaKit.targets</PackagePath>
     </None>
     <None Include="Assemblies\DirectShowLib-2005.dll">
       <Pack>True</Pack>
-      <PackagePath>build\DirectShowLib-2005.dll</PackagePath>
+      <PackagePath>buildTransitive\DirectShowLib-2005.dll</PackagePath>
       <Visible>False</Visible>
     </None>
     <None Include="..\EVR Presenter\bin\Release\x86\EVRPresenter32.dll">
       <Pack>True</Pack>
-      <PackagePath>build\EVRPresenter32.dll</PackagePath>
+      <PackagePath>buildTransitive\EVRPresenter32.dll</PackagePath>
       <Visible>False</Visible>
     </None>
     <None Include="..\EVR Presenter\bin\Release\x64\EVRPresenter64.dll">
       <Pack>True</Pack>
-      <PackagePath>build\EVRPresenter64.dll</PackagePath>
+      <PackagePath>buildTransitive\EVRPresenter64.dll</PackagePath>
       <Visible>False</Visible>
     </None>
   </ItemGroup>
