@@ -50,7 +50,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
         /// <summary>
         /// The DirectShow graph interface.  In this example
-        /// We keep reference to this so we can dispose 
+        /// We keep reference to this so we can dispose
         /// of it later.
         /// </summary>
         private IGraphBuilder m_graph;
@@ -201,7 +201,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
 
 
-                    filterOutputString += string.Format("{0:X8}", Marshal.GetIUnknownForObjectInContext(filters[0]).ToInt32()) + " ";
+                    filterOutputString += string.Format("{0:X8}", Marshal.GetIUnknownForObject(filters[0]).ToInt32()) + " ";
 
                     filterOutputString += filterInfo.achName + Environment.NewLine;
 
@@ -225,7 +225,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                             prefix = "[Out] ";
 
 
-                        filterOutputString += string.Format("{0:X8}", Marshal.GetIUnknownForObjectInContext(pins[0]).ToInt32()) + " ";
+                        filterOutputString += string.Format("{0:X8}", Marshal.GetIUnknownForObject(pins[0]).ToInt32()) + " ";
                         filterOutputString += prefix + pinInfo.name + Environment.NewLine;
 
                         Marshal.ReleaseComObject(pins[0]);
@@ -633,11 +633,11 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             }
 #endif
 
-            /* We run the StopInternal() to avoid any 
+            /* We run the StopInternal() to avoid any
              * Dispatcher VeryifyAccess() issues because
              * this may be called from the GC */
             StopInternal();
-            
+
             if (m_graph != null)
             {
                 DirectShowUtil.RemoveFilters(m_graph);
