@@ -190,3 +190,4 @@ ModelManifest.xml
 *.nupkg
 /nuget.exe
 /.vs
+/nuget/nuget.exe
