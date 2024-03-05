@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>WPFMediaKit</id>
-    <version>2.2.0</version>
+    <version>2.3.0</version>
     <authors>WPF MediaKit Team</authors>
     <owners>WPF MediaKit Team</owners>
     <licenseUrl>https://github.com/Sascha-L/WPF-MediaKit/blob/master/License.txt</licenseUrl>
@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A library to quickly build DirectShow and MediaFoundation media player controls in WPF. The kit comes with a MediaElement replacement, a VideoCaptureElement for web cams and a DVDPlayerElement that plays DVDs and supports interactive menus.</description>
     <releaseNotes>Some bugfixes and performance improvements.</releaseNotes>
-    <copyright>Copyright © 2015-2017 by WPF MediaKit Team</copyright>
+    <copyright>Copyright © 2015-2024 by WPF MediaKit Team</copyright>
     <tags>wpf video directshow evr dvd player media MediaFoundation</tags>
    </metadata>
   <files>

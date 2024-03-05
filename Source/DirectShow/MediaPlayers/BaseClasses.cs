@@ -391,8 +391,16 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 m_basicAudio.get_Volume(out dShowVolume);
 
                 /* Do calulations to convert to a base of 0 for silence */
-                dShowVolume -= DSHOW_VOLUME_SILENCE;
-                return (double)dShowVolume / -DSHOW_VOLUME_SILENCE;
+                if (dShowVolume <= DSHOW_VOLUME_SILENCE)
+                    return 0.0;
+                else if (dShowVolume >= DSHOW_VOLUME_MAX)
+                    return 1.0;
+                else
+                {
+                    return Math.Pow(10, ((double)dShowVolume / 20 / 100));
+                }
+
+
             }
             set
             {
@@ -413,7 +421,10 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                      * for silence and DSHOW_VOLUME_MAX for full volume
                      * so we calculate that here based off an input of 0 of silence and 1.0
                      * for full audio */
-                    int dShowVolume = (int)((1 - value) * DSHOW_VOLUME_SILENCE);
+
+                    //int dShowVolume = (int)((1 - value) * DSHOW_VOLUME_SILENCE);
+
+                    int dShowVolume = (int)(20 * Math.Log10(value) * 100);
                     m_basicAudio.put_Volume(dShowVolume);
                 }
             }
@@ -857,7 +868,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
             {
                 var evr = new EnhancedVideoRenderer();
                 filter = evr as IBaseFilter;
-                
+
                 int hr = graph.AddFilter(filter, string.Format("Renderer: {0}", VideoRendererType.EnhancedVideoRenderer));
                 DsError.ThrowExceptionForHR(hr);
 

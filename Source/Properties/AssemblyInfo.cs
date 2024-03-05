@@ -8,7 +8,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("WPF MediaKit Team")]
 [assembly: AssemblyProduct("WPF MediaKit")]
-[assembly: AssemblyCopyright("Copyright © 2015-2017 by WPF MediaKit Team")]
+[assembly: AssemblyCopyright("Copyright © 2015-2024 by WPF MediaKit Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -25,4 +25,4 @@ using System.Windows;
 
 
 
-[assembly: AssemblyVersion("2.2.0")]
+[assembly: AssemblyVersion("2.3.0")]
