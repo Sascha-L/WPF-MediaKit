@@ -4,6 +4,9 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using WPFMediaKit.DirectShow.MediaPlayers;
 using DirectShowLib;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace WPFMediaKit.DirectShow.Controls
 {
@@ -29,6 +32,19 @@ namespace WPFMediaKit.DirectShow.Controls
         {
             get { return (int)GetValue(DesiredPixelWidthProperty); }
             set { SetValue(DesiredPixelWidthProperty, value); }
+        }
+
+        #endregion
+
+        #region MaxResolution
+
+        public static readonly DependencyProperty MaxResolutionProperty =
+            DependencyProperty.Register("MaxResolution", typeof(bool), typeof(VideoCaptureElement));
+
+        public bool MaxResolution
+        {
+            get { return (bool)GetValue(MaxResolutionProperty); }
+            set { SetValue(MaxResolutionProperty, value); }
         }
 
         #endregion
@@ -271,8 +287,22 @@ namespace WPFMediaKit.DirectShow.Controls
         /// </summary>
         private void SetParameters()
         {
-            int height = DesiredPixelHeight;
-            int width = DesiredPixelWidth;
+            int height = 0;
+            int width = 0;
+            if (this.MaxResolution && this.VideoCaptureDevice != null)
+            {
+                var reses = GetAllAvailableResolution(this.VideoCaptureDevice);
+                var maxRes = reses.FirstOrDefault(p => p.Width == reses.Max(r => r.Width));
+
+                width = maxRes.Width;
+                height = maxRes.Height;
+            }
+            else
+            {
+                height = DesiredPixelHeight;
+                width = DesiredPixelWidth;
+            }
+
             int fps = FPS;
             bool useYuv = UseYuv;
             string filename = OutputFileName;
@@ -303,6 +333,80 @@ namespace WPFMediaKit.DirectShow.Controls
         protected override MediaPlayerBase OnRequestMediaPlayer()
         {
             return new VideoCapturePlayer();
+        }
+
+        public List<Resolution> GetAllAvailableResolution(DsDevice vidDev)
+        {
+            try
+            {
+                int hr;
+                int max = 0;
+                int bitCount = 0;
+
+                IBaseFilter sourceFilter = null;
+
+                var m_FilterGraph2 = new FilterGraph() as IFilterGraph2;
+
+                hr = m_FilterGraph2.AddSourceFilterForMoniker(vidDev.Mon, null, vidDev.Name, out sourceFilter);
+
+                var pRaw2 = DsFindPin.ByCategory(sourceFilter, PinCategory.Capture, 0);
+
+                var AvailableResolutions = new List<Resolution>();
+
+                VideoInfoHeader v = new VideoInfoHeader();
+                IEnumMediaTypes mediaTypeEnum;
+                hr = pRaw2.EnumMediaTypes(out mediaTypeEnum);
+
+                AMMediaType[] mediaTypes = new AMMediaType[1];
+                IntPtr fetched = IntPtr.Zero;
+                hr = mediaTypeEnum.Next(1, mediaTypes, fetched);
+
+                while (fetched != null && mediaTypes[0] != null)
+                {
+                    Marshal.PtrToStructure(mediaTypes[0].formatPtr, v);
+                    if (v.BmiHeader.Size != 0 && v.BmiHeader.BitCount != 0)
+                    {
+                        if (v.BmiHeader.BitCount > bitCount)
+                        {
+                            AvailableResolutions.Clear();
+                            max = 0;
+                            bitCount = v.BmiHeader.BitCount;
+
+
+                        }
+                        AvailableResolutions.Add(new Resolution(v.BmiHeader.Width, v.BmiHeader.Height));
+                        if (v.BmiHeader.Width > max || v.BmiHeader.Height > max)
+                            max = (Math.Max(v.BmiHeader.Width, v.BmiHeader.Height));
+                    }
+                    hr = mediaTypeEnum.Next(1, mediaTypes, fetched);
+                }
+                return AvailableResolutions;
+            }
+
+            catch (Exception ex)
+            {
+                //Log(ex);
+                return new List<Resolution>();
+            }
+        }
+    }
+
+    public class Resolution
+    {
+        public Resolution(int width, int height)
+        {
+            this.Width = width;
+            this.Height = height;
+        }
+
+        public int Width
+        {
+            get; set;
+        }
+
+        public int Height
+        {
+            get; set;
         }
     }
 }
