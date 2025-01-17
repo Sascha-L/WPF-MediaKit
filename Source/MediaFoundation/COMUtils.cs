@@ -17,7 +17,6 @@ namespace WPFMediaKit.MediaFoundation
         /// </summary>
         /// <param name="clsid">The CLSID of this object</param>
         /// <returns>true if the object is available, false if not</returns>
-        [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
         public static bool IsObjectInstalled(Guid clsid)
         {
             object comobj = null;
@@ -80,7 +79,7 @@ namespace WPFMediaKit.MediaFoundation
         /// <exception cref="System.Runtime.InteropServices.COMException">Thrown if the method can't creat COM-object</exception>
         /// <exception cref="System.Runtime.DllNotFoundException">Thrown if the dll not found</exception>
         /// <exception cref="System.ArgumentNullException"/>
-        [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
+
         public static T CreateFromDll<T>(string dllName, Guid mpaguid)
         {
             if (String.IsNullOrEmpty(dllName))
