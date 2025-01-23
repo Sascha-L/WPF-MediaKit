@@ -312,7 +312,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                                            out currentVolume,
                                            out side,
                                            out titleCount);
-                
+
                 return titleCount;
             }
         }
@@ -383,7 +383,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             IDvdCmd cmd;
             m_dvdControl.Resume(DvdCmdFlags.None, out cmd);
-            
+
             if (cmd != null)
                 Marshal.ReleaseComObject(cmd);
         }
@@ -397,7 +397,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
 
             if (m_dvdControl == null)
                 return;
-            
+
             m_dvdControl.SelectRelativeButton((DvdRelativeButton)relativeButton);
         }
 
@@ -606,7 +606,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 {
                     var mixer = m_renderer as IVMRMixerControl9;
 
-                    if(mixer != null)
+                    if (mixer != null)
                     {
                         VMR9MixerPrefs dwPrefs;
                         mixer.GetMixingPrefs(out dwPrefs);
@@ -679,7 +679,7 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                         }
 
                         /* This will be the audio stream pin */
-                        if (mediaType.subType == MediaSubType.DolbyAC3 ||
+                        if (mediaType.subType == MediaSubType.Audio.DolbyAc3 ||
                            mediaType.subType == MediaSubType.Mpeg2Audio)
                         {
                             /* Keep the ref and we'll work with it later */
@@ -752,9 +752,9 @@ namespace WPFMediaKit.DirectShow.MediaPlayers
                 DsError.ThrowExceptionForHR(hr);
 
                 /* These are the subtypes most likely to be our dvd subpicture */
-                var preferedSubpictureTypes = new[]{MediaSubType.ARGB4444, 
-                                                    MediaSubType.AI44, 
-                                                    MediaSubType.AYUV, 
+                var preferedSubpictureTypes = new[]{MediaSubType.ARGB4444,
+                                                    MediaSubType.AI44,
+                                                    MediaSubType.AYUV,
                                                     MediaSubType.ARGB32};
                 IPin dvdSubPicturePinOut = null;
 

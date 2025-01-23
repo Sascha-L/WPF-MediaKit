@@ -16,6 +16,26 @@ Answer issues, open PR, or become a maintainer. Open an issue, if you are willin
 
 ## Changelog
 
+Version 3.0:
+- Added .NET 8 & .NET 9 compatibility, removed .NET Framework compatibility. If you are still using .NET Framework, please use Version 2.3.0 of WPF MediaKit!
+
+Version 2.3:
+- Bugfixes
+- Upgraded to .NET Framework 4.8
+- Test Application with x64 support
+
+Version 2.2:
+- Video snapshots by D3DRenderer.CloneSingleFrameImage()
+- D3DRenderer optimizations.
+- NuGet package.
+
+Version 2.1:
+- Bugfixes (Memory Leak)
+- fallback mechanism to auto generate graph if manually generated graph doesn't work
+- fix video playback if no audio device is available
+- LAV Splitter Source is not hardcorded anymore
+- EVR is default Video Renderer
+
 Version 2.0:
 - EVR Presenter uses DXVA2 hardware acceleration (thanks to Siegfried Krüger!).
 - EVR Presenter doesn't require the DirectX  March 2009 Runtimes anymore (thanks to Siegfried Krüger!).

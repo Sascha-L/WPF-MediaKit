@@ -10,11 +10,29 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
-    <AssemblyVersion>3.0.0</AssemblyVersion>
-    <FileVersion>3.0.0</FileVersion>
+    <AssemblyVersion>3.0.1</AssemblyVersion>
+    <FileVersion>3.0.1</FileVersion>
 
 
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>WPFMediaKit</PackageId>
+    <PackageVersion>3.0.1</PackageVersion>
+    <Authors>WPF MediaKit Team</Authors>
+    <Owners>WPF MediaKit Team</Owners>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseUrl>https://github.com/Sascha-L/WPF-MediaKit/blob/master/License.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/Sascha-L/WPF-MediaKit</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>A library to quickly build DirectShow and MediaFoundation media player controls in WPF. The kit comes with a MediaElement replacement, a VideoCaptureElement for web cams and a DVDPlayerElement that plays DVDs and supports interactive menus.</Description>
+    <PackageReleaseNotes>Added .NET 8 &amp; .NET 9 compatibility, removed .NET Framework compatibility. Fixed DirectShowLib. If you are still using .NET Framework, please use Version 2.3.0 of WPF MediaKit!</PackageReleaseNotes>
+    <Copyright>Copyright © 2015-2025 by WPF MediaKit Team</Copyright>
+    <PackageTags>wpf video directshow evr dvd player media MediaFoundation</PackageTags>
+  </PropertyGroup>
+
+
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>default</LangVersion>
@@ -31,23 +49,31 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DirectShowLib.Net" Version="3.0.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="DirectShowLib-2005">
-      <HintPath>Assemblies\DirectShowLib-2005.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\License.txt">
 
       <Visible>False</Visible>
     </None>
-    <None Include="..\README.md">
+    <None Include="..\README.md" Pack="true" PackagePath="\">
 
       <Visible>False</Visible>
     </None>
 
   </ItemGroup>
+  <ItemGroup>
+
+
+    <Content Include="..\EVR Presenter\bin\Release\x86\EVRPresenter32.dll" CopyToOutputDirectory="Always" Pack="true" PackagePath="runtimes\win-x86\native" TargetPath="runtimes\win-x86\native\EVRPresenter32.dll">
+      <Visible>False</Visible>
+    </Content>
+
+    <Content Include="..\EVR Presenter\bin\Release\x64\EVRPresenter64.dll" CopyToOutputDirectory="Always" Pack="true" PackagePath="runtimes\win-x64\native" TargetPath="runtimes\win-x64\native\EVRPresenter64.dll">
+      <Visible>False</Visible>
+    </Content>
+  </ItemGroup>
+
 </Project>
